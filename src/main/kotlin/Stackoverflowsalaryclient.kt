@@ -1,0 +1,124 @@
+import io.ktor.client.*
+import io.ktor.client.engine.cio.*
+import io.ktor.client.plugins.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.apache.commons.csv.CSVFormat
+import org.apache.commons.csv.CSVParser
+import java.io.File
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+
+// 📊 Stack Overflow Developer Survey'in RESMİ, herkese açık, ücretsiz ham verisi.
+// Kaynak: StackExchange'in kendi GitHub reposu (uydurma değil, doğrudan gerçek
+// yanıt satırları). Her satır: bir katılımcının ülkesi, rolü (DevType) ve
+// USD'ye çevrilmiş yıllık maaşı (ConvertedCompYearly). Biz bunları ülke+rol
+// bazında GRUPLAYIP MEDYAN alıyoruz — global bir ortalamayı ölçeklemek değil,
+// gerçek dağılımdan gerçek bir sayı çıkarmak.
+object StackOverflowSalaryClient {
+    private const val CSV_URL = "https://github.com/StackExchange/Survey/raw/refs/heads/main/packages/archive/2025/results.csv"
+    private val localCacheFile = File("so_survey_2025.csv")
+    private val client = HttpClient(CIO) {
+        install(HttpTimeout) { requestTimeoutMillis = 180_000 }
+    }
+
+    data class RealSalary(val medianUsd: Double, val sampleSize: Int)
+
+    // 🌍 Anketteki ülke isimlerini bizim ISO kodlarımıza çeviriyor. SO'nun kullandığı
+    // tam metin format değişebiliyor, bu yüzden birkaç varyant ekliyoruz.
+    private val countryNameToCode = mapOf(
+        "United States of America" to "US",
+        "Germany" to "DE",
+        "United Kingdom of Great Britain and Northern Ireland" to "GB",
+        "Netherlands" to "NL",
+        "Turkey" to "TR", "Türkiye" to "TR",
+        "India" to "IN",
+        "Brazil" to "BR",
+        "Canada" to "CA",
+        "Poland" to "PL",
+        "Australia" to "AU",
+        "Switzerland" to "CH",
+        "France" to "FR",
+        "Japan" to "JP"
+    )
+
+    // 💻 SO'nun "DevType" (çoklu seçim, noktalı virgülle ayrılmış metin) alanını
+    // bizim rol isimlerimize eşliyoruz. Bir katılımcı birden fazla role sayılabilir
+    // (örn. hem backend hem full-stack işaretlemiş olabilir) — bu normal ve doğru.
+    private val devTypeToRole = linkedMapOf(
+        "Developer, back-end" to "Backend Developer",
+        "Developer, front-end" to "Frontend Developer",
+        "Developer, full-stack" to "Full-Stack Developer",
+        "Developer, mobile" to "Mobile Developer",
+        "DevOps specialist" to "DevOps Engineer",
+        "Cloud infrastructure engineer" to "Cloud Engineer",
+        "Data engineer" to "Data Engineer",
+        "Data scientist or machine learning specialist" to "Data Scientist / ML Engineer",
+        "Security professional" to "Security Professional",
+        "Engineering manager" to "Engineering Manager"
+    )
+
+    // Dönen map key formatı: "US|Backend Developer"
+    suspend fun computeRealSalaries(): Map<String, RealSalary> {
+        val file = downloadIfStale() ?: return emptyMap()
+
+        return withContext(Dispatchers.IO) {
+            val salaryLists = mutableMapOf<String, MutableList<Double>>()
+
+            try {
+                file.bufferedReader(Charsets.UTF_8).use { reader ->
+                    val parser = CSVParser(reader, CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true).build())
+                    for (record in parser) {
+                        val country = try { record.get("Country") } catch (e: Exception) { null }
+                            ?.let { countryNameToCode[it] } ?: continue
+                        val devTypeRaw = try { record.get("DevType") } catch (e: Exception) { null } ?: continue
+                        val compRaw = try { record.get("ConvertedCompYearly") } catch (e: Exception) { null } ?: continue
+                        val comp = compRaw.toDoubleOrNull() ?: continue
+                        if (comp < 5000 || comp > 2_000_000) continue // 🧹 uç/hatalı veriyi ele
+
+                        for (dt in devTypeRaw.split(";").map { it.trim() }) {
+                            val role = devTypeToRole[dt] ?: continue
+                            salaryLists.getOrPut("$country|$role") { mutableListOf() }.add(comp)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                println("🔥 SO Survey parse hatası: ${e.message}")
+                return@withContext emptyMap<String, RealSalary>()
+            }
+
+            salaryLists.mapValues { (_, values) ->
+                val sorted = values.sorted()
+                val median = if (sorted.size % 2 == 0) {
+                    (sorted[sorted.size / 2 - 1] + sorted[sorted.size / 2]) / 2.0
+                } else {
+                    sorted[sorted.size / 2]
+                }
+                RealSalary(medianUsd = median, sampleSize = sorted.size)
+            }
+        }
+    }
+
+    // 💾 CSV'yi diske önbelleğe alıyoruz — her sunucu yeniden başlatmasında onlarca
+    // MB indirmeyelim diye. 30 günden eskiyse (ya da hiç yoksa) tekrar indiriyor.
+    private suspend fun downloadIfStale(): File? {
+        val isStale = !localCacheFile.exists() ||
+                Instant.now().minus(30, ChronoUnit.DAYS).isAfter(Instant.ofEpochMilli(localCacheFile.lastModified()))
+
+        if (!isStale) return localCacheFile
+
+        return try {
+            println("📥 Stack Overflow anket verisi indiriliyor (ilk seferde birkaç dakika sürebilir)...")
+            val response: HttpResponse = client.get(CSV_URL)
+            val bytes = response.readBytes()
+            localCacheFile.writeBytes(bytes)
+            println("✅ Stack Overflow anket verisi indirildi (~${bytes.size / 1_000_000} MB).")
+            localCacheFile
+        } catch (e: Exception) {
+            println("🔥 SO Survey indirme hatası: ${e.message}")
+            if (localCacheFile.exists()) localCacheFile else null
+        }
+    }
+}

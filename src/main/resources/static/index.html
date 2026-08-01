@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NetKalan | Ülkeler Arası Yaşam & Maaş Karşılaştırması</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💰</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-green: #3e5f47;
+            --dark-green: #141d16;
+            --light-green: #8fae98;
+            --accent-gold: #c9a961;
+            --bg-gradient: linear-gradient(180deg, #14190f 0%, #1c2318 100%);
+            --light-green-rgb: 143, 174, 152;
+            --accent-gold-rgb: 201, 169, 97;
+            --fg-rgb: 242, 240, 236;
+            --surface-strong-rgb: 20, 23, 15;
+            --good-rgb: 143, 174, 152;
+            --bad-rgb: 220, 90, 90;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+        body {
+            background: var(--bg-gradient);
+            color: rgb(var(--fg-rgb));
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px 80px 20px;
+            position: relative;
+            overflow-x: hidden;
+            font-weight: 400;
+            letter-spacing: 0.1px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -20%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 900px;
+            height: 900px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(var(--light-green-rgb), 0.06) 0%, transparent 65%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .site-header {
+            width: calc(100% + 40px);
+            margin: -40px -20px 30px -20px;
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid rgba(var(--fg-rgb), 0.07);
+            position: sticky;
+            top: 0;
+            z-index: 300;
+        }
+
+        .site-header-inner {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 11px;
+        }
+
+        .logo-group { display: flex; align-items: center; gap: 11px; }
+
+        .header-share-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            border-radius: 3px;
+            border: 1px solid rgba(var(--fg-rgb), 0.16);
+            background: transparent;
+            color: rgba(var(--fg-rgb), 0.75);
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .header-share-btn:hover { border-color: var(--accent-gold); color: var(--accent-gold); }
+
+        .logo-badge {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            border: 1px solid rgba(var(--light-green-rgb), 0.55);
+        }
+
+        .logo-text {
+            font-size: 1.05rem;
+            font-weight: 600;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        .logo-text-accent { color: var(--accent-gold); font-weight: 700; }
+
+        .container { width: 100%; max-width: 1000px; position: relative; z-index: 1; }
+
+        .subtitle {
+            text-align: center;
+            color: rgba(var(--fg-rgb), 0.55);
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+
+        .role-select-wrap {
+            max-width: 420px;
+            margin: 0 auto 30px auto;
+            position: relative;
+        }
+
+        .role-select-label {
+            font-size: 0.68rem;
+            color: rgba(var(--fg-rgb), 0.5);
+            margin-bottom: 8px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: block;
+            text-align: center;
+        }
+
+        .role-select-input {
+            width: 100%;
+            padding: 13px 16px;
+            border-radius: 3px;
+            border: 1px solid rgba(var(--accent-gold-rgb), 0.4);
+            background: rgba(var(--fg-rgb), 0.02);
+            color: rgb(var(--fg-rgb));
+            font-size: 0.95rem;
+            font-weight: 500;
+            outline: none;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .role-select-input:focus { border-color: var(--accent-gold); }
+
+        .role-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            margin-top: 4px;
+            background: rgb(var(--surface-strong-rgb));
+            border: 1px solid rgba(var(--light-green-rgb), 0.35);
+            border-radius: 4px;
+            max-height: 280px;
+            overflow-y: auto;
+            z-index: 100;
+            box-shadow: 0 16px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .role-dropdown.open { display: block; }
+
+        .role-dropdown-item {
+            padding: 11px 16px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            border-bottom: 1px solid rgba(var(--fg-rgb), 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .role-dropdown-item:last-child { border-bottom: none; }
+        .role-dropdown-item:hover { background: rgba(var(--light-green-rgb), 0.12); }
+        .role-dropdown-item.active-role { color: var(--accent-gold); }
+
+        .role-dropdown-item-note {
+            font-size: 0.62rem;
+            color: rgba(var(--fg-rgb), 0.4);
+            white-space: nowrap;
+        }
+
+        .disclaimer {
+            background: rgba(var(--fg-rgb), 0.025);
+            border: 1px solid rgba(var(--accent-gold-rgb), 0.25);
+            border-radius: 6px;
+            padding: 14px 18px;
+            font-size: 0.78rem;
+            color: rgba(var(--fg-rgb), 0.65);
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+
+        .disclaimer b { color: var(--accent-gold); }
+
+        .country-list { display: flex; flex-direction: column; gap: 14px; }
+
+        .country-card {
+            background: rgba(var(--fg-rgb), 0.025);
+            border: 1px solid rgba(var(--fg-rgb), 0.1);
+            border-radius: 8px;
+            padding: 20px 22px;
+            transition: border-color 0.2s ease;
+        }
+
+        .country-card:hover { border-color: rgba(var(--light-green-rgb), 0.4); }
+
+        .country-card-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .country-name-row { display: flex; align-items: center; gap: 10px; }
+
+        .country-rank {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            border: 1px solid rgba(var(--accent-gold-rgb), 0.5);
+            color: var(--accent-gold);
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .country-flag { font-size: 1.4rem; }
+        .country-name { font-size: 1.05rem; font-weight: 700; }
+
+        .controls-row {
+            max-width: 480px;
+            margin: 0 auto 16px auto;
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .household-btn {
+            flex: 1;
+            min-width: 120px;
+            padding: 9px 12px;
+            border-radius: 3px;
+            border: 1px solid rgba(var(--fg-rgb), 0.16);
+            background: transparent;
+            color: rgba(var(--fg-rgb), 0.75);
+            font-size: 0.74rem;
+            font-weight: 600;
+            letter-spacing: 0.4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .household-btn:hover { border-color: rgba(var(--fg-rgb), 0.4); }
+
+        .household-btn.active {
+            background: rgba(var(--light-green-rgb), 0.14);
+            border-color: rgba(var(--accent-gold-rgb), 0.55);
+            color: var(--accent-gold);
+        }
+
+        #appToast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: rgb(var(--surface-strong-rgb));
+            border: 1px solid rgba(var(--light-green-rgb), 0.4);
+            color: rgb(var(--fg-rgb));
+            padding: 12px 22px;
+            border-radius: 4px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            z-index: 500;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
+        }
+
+        #appToast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        .city-chip-row {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+
+        .city-chip {
+            padding: 7px 16px;
+            border-radius: 20px;
+            border: 1px solid rgba(var(--fg-rgb), 0.18);
+            background: transparent;
+            color: rgba(var(--fg-rgb), 0.75);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .city-chip:hover { border-color: rgba(var(--light-green-rgb), 0.5); }
+
+        .city-chip.active {
+            background: rgba(var(--accent-gold-rgb), 0.15);
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+        }
+
+        /* 💰 Net kalan tutarı iyice öne çıkaralım — bu sitenin ana metriği */
+        .net-remaining-box {
+            text-align: right;
+        }
+
+        .net-remaining {
+            font-size: 1.7rem;
+            font-weight: 800;
+            color: var(--light-green);
+            line-height: 1.1;
+            display: block;
+        }
+
+        .net-remaining.negative { color: rgb(var(--bad-rgb)); }
+
+        /* 🆚 Karşılaştır modu */
+        .compare-toggle-btn {
+            padding: 9px 16px;
+            border-radius: 3px;
+            border: 1px solid rgba(var(--accent-gold-rgb), 0.4);
+            background: transparent;
+            color: var(--accent-gold);
+            font-size: 0.74rem;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .compare-toggle-btn.active {
+            background: rgba(var(--accent-gold-rgb), 0.18);
+        }
+
+        .compare-select-row {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 6px;
+        }
+
+        .compare-select-chip {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(var(--fg-rgb), 0.2);
+            background: transparent;
+            color: rgba(var(--fg-rgb), 0.6);
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .compare-select-chip.selected {
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+            background: rgba(var(--accent-gold-rgb), 0.12);
+        }
+
+        .country-card.compare-selected { border-color: var(--accent-gold); }
+
+        .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        @media (max-width: 700px) { .compare-grid { grid-template-columns: 1fr; } }
+
+        /* ⭐ Life Score yıldızları */
+        .life-score-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin: 14px 0;
+            padding: 12px;
+            background: rgba(var(--fg-rgb), 0.02);
+            border-radius: 6px;
+            border: 1px solid rgba(var(--fg-rgb), 0.06);
+        }
+
+        .life-score-item { text-align: center; }
+
+        .life-score-label {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: rgba(var(--fg-rgb), 0.45);
+            margin-bottom: 4px;
+        }
+
+        .life-score-stars {
+            font-size: 0.95rem;
+            color: var(--accent-gold);
+            letter-spacing: 1px;
+        }
+
+        .life-score-stars.disabled {
+            color: rgba(var(--fg-rgb), 0.25);
+            font-size: 0.62rem;
+            letter-spacing: 0.3px;
+        }
+
+        .net-remaining-pct {
+            font-size: 0.7rem;
+            color: rgba(var(--fg-rgb), 0.5);
+            font-weight: 600;
+        }
+
+        .net-remaining-label {
+            font-size: 0.62rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(var(--fg-rgb), 0.45);
+            display: block;
+            text-align: right;
+        }
+
+        .breakdown-bar {
+            display: flex;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 14px;
+            background: rgba(var(--fg-rgb), 0.06);
+        }
+
+        .bar-seg-tax { background: rgba(var(--bad-rgb), 0.55); }
+        .bar-seg-rent { background: rgba(var(--accent-gold-rgb), 0.65); }
+        .bar-seg-expense { background: rgba(var(--fg-rgb), 0.3); }
+        .bar-seg-remaining { background: rgba(var(--good-rgb), 0.85); }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .stat-box { text-align: center; }
+
+        .stat-label {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: rgba(var(--fg-rgb), 0.45);
+            margin-bottom: 3px;
+        }
+
+        .stat-value { font-size: 0.88rem; font-weight: 600; }
+        .stat-value.tax { color: rgb(var(--bad-rgb)); }
+        .stat-value.rent { color: var(--accent-gold); }
+
+        .source-line {
+            font-size: 0.65rem;
+            color: rgba(var(--fg-rgb), 0.35);
+            border-top: 1px solid rgba(var(--fg-rgb), 0.06);
+            padding-top: 8px;
+            margin-top: 4px;
+        }
+
+        .loading-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: rgba(var(--fg-rgb), 0.5);
+        }
+
+        @media (max-width: 650px) {
+            .stat-grid { grid-template-columns: repeat(3, 1fr); }
+            .country-card-top { flex-direction: column; align-items: flex-start; }
+            .net-remaining-label { text-align: left; }
+        }
+    </style>
+</head>
+<body>
+
+<header class="site-header">
+    <div class="site-header-inner">
+        <div class="logo-group">
+            <span class="logo-badge">💰</span>
+            <span class="logo-text">Net<span class="logo-text-accent">Kalan</span></span>
+        </div>
+        <button id="shareBtn" class="header-share-btn">🔗 Paylaş</button>
+    </div>
+</header>
+
+<div class="container">
+    <p class="subtitle">Aynı meslek, farklı ülkeler — kirayı ve gideri çıkarınca elinde ne kalıyor?</p>
+    <div class="role-select-wrap" id="roleSelectWrap">
+        <span class="role-select-label">Meslek Seç</span>
+        <input id="roleSelectInput" class="role-select-input" type="text" autocomplete="off" placeholder="Meslek yazın veya listeden seçin..." value="Backend Developer">
+        <div id="roleDropdown" class="role-dropdown"></div>
+    </div>
+
+    <div class="controls-row" id="householdRow"></div>
+    <div class="controls-row" id="compareControlRow"></div>
+
+    <div id="countryList" class="country-list">
+        <div class="loading-state">Veriler yükleniyor...</div>
+    </div>
+
+    <div class="disclaimer">
+        <b>⚠️ Veri notu:</b> <b>✓ GERÇEK VERİ</b> etiketli maaşlar Stack Overflow Developer Survey'in
+        resmi, ham anket verisinden (StackExchange'in kendi GitHub deposu) o ülke+rol için hesaplanan
+        gerçek medyan değerdir — tahmin değil. Yeterli yanıt sayısı olmayan kombinasyonlarda ise
+        <b>tahmini/ölçeklenmiş</b> rakamlar kullanılıyor (bu açıkça belirtiliyor). <b>Doktor/Öğretmen/Avukat
+        gibi tech-olmayan roller</b> için hâlâ gerçek bir kaynak yok, ülke ortalama ücretine göre kaba bir
+        tahmin. <b>🌍 Enflasyon ve İş Fırsatı yıldızı, World Bank'in resmi verisinden</b> hesaplanıyor —
+        bunlar da gerçek. Tüm veriler ayda bir otomatik olarak yenileniyor.
+    </div>
+</div>
+
+<script>
+    const countryFlags = {
+        'US': '🇺🇸', 'DE': '🇩🇪', 'GB': '🇬🇧', 'NL': '🇳🇱', 'TR': '🇹🇷',
+        'IN': '🇮🇳', 'BR': '🇧🇷', 'CA': '🇨🇦', 'PL': '🇵🇱', 'AU': '🇦🇺',
+        'CH': '🇨🇭', 'FR': '🇫🇷', 'JP': '🇯🇵'
+    };
+
+    // ⭐ Life Score — SADECE elimizde gerçek veri olan iki kategori hesaplanıyor
+    // (Vergi: vergi kaması, Kira: kira/net gelir oranı). İş Fırsatı ve Güvenlik
+    // için henüz veri kaynağımız yok — uydurma yıldız vermek yerine "yakında"
+    // olarak işaretliyoruz.
+    function starsHtml(count) {
+        return '★'.repeat(count) + '☆'.repeat(5 - count);
+    }
+
+    function computeTaxStars(taxWedgePercent) {
+        if (taxWedgePercent < 10) return 5;
+        if (taxWedgePercent < 20) return 4;
+        if (taxWedgePercent < 30) return 3;
+        if (taxWedgePercent < 40) return 2;
+        return 1;
+    }
+
+    function computeRentStars(rentUsd, netMonthlyUsd) {
+        if (netMonthlyUsd <= 0) return 1;
+        const ratio = rentUsd / netMonthlyUsd;
+        if (ratio < 0.15) return 5;
+        if (ratio < 0.25) return 4;
+        if (ratio < 0.35) return 3;
+        if (ratio < 0.45) return 2;
+        return 1;
+    }
+
+    function computeJobStars(unemploymentPercent) {
+        if (unemploymentPercent < 4) return 5;
+        if (unemploymentPercent < 6) return 4;
+        if (unemploymentPercent < 8) return 3;
+        if (unemploymentPercent < 10) return 2;
+        return 1;
+    }
+
+    function buildLifeScoreHtml(d, c) {
+        const taxStars = computeTaxStars((d.taxAmount / d.grossMonthly) * 100);
+        const rentStars = computeRentStars(d.rent, d.netMonthly);
+
+        // 🌍 İş Fırsatı artık GERÇEK World Bank işsizlik verisinden hesaplanıyor.
+        // Sunucu henüz veriyi çekmediyse (ilk birkaç saniye) ya da o ülke için
+        // World Bank'te veri yoksa, uydurmak yerine "yakında" gösteriyoruz.
+        const jobHtml = (c.unemploymentPercent !== null && c.unemploymentPercent !== undefined)
+            ? `<div class="life-score-stars" title="World Bank işsizlik oranı: %${c.unemploymentPercent.toFixed(1)}">${starsHtml(computeJobStars(c.unemploymentPercent))}</div>`
+            : `<div class="life-score-stars disabled" title="World Bank verisi yükleniyor...">yükleniyor</div>`;
+
+        return `
+            <div class="life-score-grid">
+                <div class="life-score-item">
+                    <div class="life-score-label">İş Fırsatı</div>
+                    ${jobHtml}
+                </div>
+                <div class="life-score-item">
+                    <div class="life-score-label">Güvenlik</div>
+                    <div class="life-score-stars disabled" title="Veri kaynağı yakında eklenecek">yakında</div>
+                </div>
+                <div class="life-score-item">
+                    <div class="life-score-label">Kira Uygunluğu</div>
+                    <div class="life-score-stars" title="Kira / net gelir oranına göre">${starsHtml(rentStars)}</div>
+                </div>
+                <div class="life-score-item">
+                    <div class="life-score-label">Vergi Yükü</div>
+                    <div class="life-score-stars" title="Vergi kamasına göre">${starsHtml(taxStars)}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    let lastCountries = [];           // 💡 şehir chip'i tıklanınca yeniden fetch etmemek için son veriyi saklıyoruz
+    const selectedCityIdxByCountry = {}; // countryCode -> seçili şehir indeksi (varsayılan 0 = Ülke Ortalaması)
+
+    function formatUsd(value) {
+        return '$' + Math.round(value).toLocaleString('en-US');
+    }
+
+    function showToast(message, duration = 2200) {
+        let toast = document.getElementById('appToast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'appToast';
+            document.body.appendChild(toast);
+        }
+        toast.textContent = message;
+        toast.classList.add('show');
+        clearTimeout(toast._hideTimer);
+        toast._hideTimer = setTimeout(() => toast.classList.remove('show'), duration);
+    }
+
+    // 💰 Bir ülke + seçilen şehir için görüntülenecek tüm sayıları hesaplıyor.
+    // Şehir çarpanı sadece client-side uygulanıyor (server "Ülke Ortalaması"nı,
+    // yani çarpan 1.0'ı gönderiyor); böylece şehir değiştirmek yeni bir network
+    // isteği gerektirmiyor, anında güncelleniyor.
+    function computeDisplay(c, cityIdx) {
+        const city = (c.cities && c.cities[cityIdx]) ? c.cities[cityIdx] : { rentMultiplier: 1, expenseMultiplier: 1, cityNameTr: 'Ülke Ortalaması' };
+        const grossMonthly = c.grossAnnualUsd / 12;
+        const netMonthly = c.netAnnualUsd / 12;
+        const taxAmount = grossMonthly - netMonthly;
+        const rent = c.monthlyRentUsd * city.rentMultiplier;
+        const expense = c.monthlyExpenseUsd * city.expenseMultiplier;
+        const remaining = netMonthly - rent - expense;
+        const remainingPctOfGross = grossMonthly > 0 ? (remaining / grossMonthly) * 100 : 0;
+        return { city, grossMonthly, netMonthly, taxAmount, rent, expense, remaining, remainingPctOfGross };
+    }
+
+    function buildCardHtml(c, idx, maxGrossMonthly) {
+        const cityIdx = selectedCityIdxByCountry[c.countryCode] || 0;
+        const d = computeDisplay(c, cityIdx);
+
+        const scale = d.grossMonthly / maxGrossMonthly * 100;
+        const taxPct = (d.taxAmount / d.grossMonthly) * scale;
+        const rentPct = (d.rent / d.grossMonthly) * scale;
+        const expensePct = (d.expense / d.grossMonthly) * scale;
+        const remainingPct = Math.max(0, scale - taxPct - rentPct - expensePct);
+
+        const cityChipsHtml = (c.cities || []).map((city, cIdx) => `
+            <button class="city-chip ${cIdx === cityIdx ? 'active' : ''}" data-country="${c.countryCode}" data-city-idx="${cIdx}">${city.cityNameTr}</button>
+        `).join('');
+
+        const isRealSalary = c.salarySource.includes('GERÇEK');
+        const salaryBadge = isRealSalary
+            ? '<span style="color:var(--light-green);font-weight:700;">✓ GERÇEK VERİ</span> · '
+            : '';
+        const inflationHtml = (c.inflationPercent !== null && c.inflationPercent !== undefined)
+            ? `%${c.inflationPercent.toFixed(1)}`
+            : '...';
+        const pctSign = d.remainingPctOfGross >= 0 ? '' : '−';
+
+        const isSelected = compareSelected.includes(c.countryCode);
+        const compareRowHtml = compareMode ? `
+            <div class="compare-select-row">
+                <button class="compare-select-chip ${isSelected ? 'selected' : ''}" data-compare-code="${c.countryCode}">
+                    ${isSelected ? '✓ Seçildi' : '+ Karşılaştırmaya Ekle'}
+                </button>
+            </div>
+        ` : '';
+
+        return `
+            ${compareRowHtml}
+            <div class="country-card-top">
+                <div class="country-name-row">
+                    <span class="country-rank">${idx + 1}</span>
+                    <span class="country-flag">${countryFlags[c.countryCode] || ''}</span>
+                    <span class="country-name">${c.countryNameTr}</span>
+                </div>
+                <div class="net-remaining-box">
+                    <span class="net-remaining-label">Aylık Net Kalan</span>
+                    <span class="net-remaining ${d.remaining < 0 ? 'negative' : ''}">${formatUsd(d.remaining)}</span>
+                    <span class="net-remaining-pct">brüt maaşın ${pctSign}%${Math.abs(d.remainingPctOfGross).toFixed(0)}'i</span>
+                </div>
+            </div>
+            <div class="city-chip-row">${cityChipsHtml}</div>
+            <div class="breakdown-bar">
+                <div class="bar-seg-tax" style="width:${taxPct}%"></div>
+                <div class="bar-seg-rent" style="width:${rentPct}%"></div>
+                <div class="bar-seg-expense" style="width:${expensePct}%"></div>
+                <div class="bar-seg-remaining" style="width:${remainingPct}%"></div>
+            </div>
+            <div class="stat-grid">
+                <div class="stat-box">
+                    <div class="stat-label">Brüt / Yıl</div>
+                    <div class="stat-value">${formatUsd(c.grossAnnualUsd)}</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Vergi Kaması</div>
+                    <div class="stat-value tax">%${c.taxWedgePercent.toFixed(1)}</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Net / Ay</div>
+                    <div class="stat-value">${formatUsd(d.netMonthly)}</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Kira / Ay</div>
+                    <div class="stat-value rent">${formatUsd(d.rent)}</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Diğer Gider</div>
+                    <div class="stat-value">${formatUsd(d.expense)}</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Enflasyon 🌍</div>
+                    <div class="stat-value">${inflationHtml}</div>
+                </div>
+            </div>
+            ${buildLifeScoreHtml(d, c)}
+            <div class="source-line">
+                ${salaryBadge}📊 ${c.salarySource} · 🏠 ${c.costSource} · Son güncelleme: ${c.lastUpdated}
+            </div>
+        `;
+    }
+
+    let compareMode = false;       // 🆚 seçim modu açık mı
+    let compareSelected = [];      // seçilen ülke kodları (max 2)
+    let compareActive = false;     // sadece seçilen 2 ülke mi gösteriliyor
+
+    function renderCountries(countries) {
+        lastCountries = countries;
+        const list = document.getElementById('countryList');
+        list.innerHTML = '';
+
+        const displayCountries = compareActive
+            ? countries.filter(c => compareSelected.includes(c.countryCode))
+            : countries;
+
+        list.classList.toggle('compare-grid', compareActive && displayCountries.length === 2);
+
+        const maxGrossMonthly = Math.max(...countries.map(c => c.grossAnnualUsd / 12));
+
+        displayCountries.forEach((c) => {
+            const idx = countries.indexOf(c);
+            const card = document.createElement('div');
+            card.className = 'country-card' + (compareSelected.includes(c.countryCode) ? ' compare-selected' : '');
+            card.id = `country-card-${c.countryCode}`;
+            card.innerHTML = buildCardHtml(c, idx, maxGrossMonthly);
+            list.appendChild(card);
+        });
+    }
+
+    function renderCompareControls() {
+        const row = document.getElementById('compareControlRow');
+
+        if (compareActive) {
+            row.innerHTML = `<button class="compare-toggle-btn active" id="compareExitBtn">🔄 Tüm Ülkeleri Göster</button>`;
+            document.getElementById('compareExitBtn').addEventListener('click', () => {
+                compareActive = false;
+                compareMode = false;
+                compareSelected = [];
+                renderCompareControls();
+                renderCountries(lastCountries);
+            });
+            return;
+        }
+
+        const label = compareMode
+            ? `🆚 Karşılaştırma modu (${compareSelected.length}/2 seçili) — iptal için tıkla`
+            : '🆚 İki Ülkeyi Karşılaştır';
+
+        row.innerHTML = `<button class="compare-toggle-btn ${compareMode ? 'active' : ''}" id="compareToggleBtn">${label}</button>`;
+        document.getElementById('compareToggleBtn').addEventListener('click', () => {
+            compareMode = !compareMode;
+            if (!compareMode) compareSelected = [];
+            renderCompareControls();
+            renderCountries(lastCountries);
+        });
+    }
+
+    // 🏙️ Şehir chip'lerine VE 🆚 karşılaştırma seçim chip'lerine tek bir
+    // delegasyon listener'ı — her re-render'da tekrar tekrar event bağlamaya gerek yok.
+    function setupCityChipDelegation() {
+        document.getElementById('countryList').addEventListener('click', (e) => {
+            const compareChip = e.target.closest('.compare-select-chip');
+            if (compareChip) {
+                const code = compareChip.dataset.compareCode;
+                if (compareSelected.includes(code)) {
+                    compareSelected = compareSelected.filter(x => x !== code);
+                } else if (compareSelected.length < 2) {
+                    compareSelected.push(code);
+                } else {
+                    showToast('En fazla 2 ülke seçebilirsin, önce birini çıkar.');
+                    return;
+                }
+
+                if (compareSelected.length === 2) {
+                    compareActive = true;
+                }
+                renderCompareControls();
+                renderCountries(lastCountries);
+                return;
+            }
+
+            const chip = e.target.closest('.city-chip');
+            if (!chip) return;
+
+            const countryCode = chip.dataset.country;
+            const cityIdx = parseInt(chip.dataset.cityIdx, 10);
+            selectedCityIdxByCountry[countryCode] = cityIdx;
+
+            // Sadece o kartı yeniden çiziyoruz, tüm listeyi değil.
+            const c = lastCountries.find(x => x.countryCode === countryCode);
+            const idx = lastCountries.indexOf(c);
+            const maxGrossMonthly = Math.max(...lastCountries.map(x => x.grossAnnualUsd / 12));
+            const cardEl = document.getElementById(`country-card-${countryCode}`);
+            if (cardEl && c) {
+                cardEl.innerHTML = buildCardHtml(c, idx, maxGrossMonthly);
+            }
+        });
+    }
+
+    let allRoles = [];
+    let allHouseholds = [];
+    let currentRole = 'Backend Developer';
+    let currentHousehold = 'single';
+
+    async function loadCountries() {
+        const list = document.getElementById('countryList');
+        list.innerHTML = '<div class="loading-state">Veriler yükleniyor...</div>';
+        try {
+            const res = await fetch(`/api/countries?role=${encodeURIComponent(currentRole)}&household=${encodeURIComponent(currentHousehold)}`);
+            const countries = await res.json();
+            renderCountries(countries);
+        } catch (e) {
+            list.innerHTML = '<div class="loading-state">❌ Veriler yüklenemedi.</div>';
+        }
+    }
+
+    async function loadRoles() {
+        try {
+            const res = await fetch('/api/roles');
+            allRoles = await res.json();
+        } catch (e) {
+            console.log('Rol listesi yüklenemedi.');
+        }
+    }
+
+    async function loadHouseholds() {
+        try {
+            const res = await fetch('/api/households');
+            allHouseholds = await res.json();
+        } catch (e) {
+            console.log('Hane tipi listesi yüklenemedi.');
+        }
+    }
+
+    function renderHouseholdToggle() {
+        const row = document.getElementById('householdRow');
+        row.innerHTML = allHouseholds.map(h => `
+            <button class="household-btn ${h.key === currentHousehold ? 'active' : ''}" data-key="${h.key}">${h.labelTr}</button>
+        `).join('');
+
+        row.querySelectorAll('.household-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentHousehold = btn.dataset.key;
+                row.querySelectorAll('.household-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                loadCountries();
+            });
+        });
+    }
+
+    // 🎭 TransferKolik'teki club autocomplete'iyle aynı mantık: yazınca filtreleniyor,
+    // tıklayınca ya da Enter'la seçiliyor, seçim /api/countries'i yeniden çağırıyor.
+    function setupRoleAutocomplete() {
+        const input = document.getElementById('roleSelectInput');
+        const dropdown = document.getElementById('roleDropdown');
+
+        function closeDropdown() {
+            dropdown.classList.remove('open');
+            dropdown.innerHTML = '';
+        }
+
+        function renderMatches(showAll) {
+            const query = showAll ? '' : input.value.trim().toLocaleLowerCase('tr-TR');
+            // 🌍 Hem Türkçe rol adında hem İngilizce karşılığında arıyoruz —
+            // "lawyer" yazan biri "Avukat"ı, "avukat" yazan biri de aynısını bulsun.
+            const matches = allRoles.filter(r =>
+                r.role.toLocaleLowerCase('tr-TR').includes(query) ||
+                (r.aliasEn && r.aliasEn.toLocaleLowerCase('en-US').includes(query))
+            );
+
+            dropdown.innerHTML = '';
+            if (matches.length === 0) { closeDropdown(); return; }
+
+            matches.forEach(r => {
+                const item = document.createElement('div');
+                item.className = 'role-dropdown-item' + (r.role === currentRole ? ' active-role' : '');
+                const aliasHtml = r.aliasEn ? ` <span style="opacity:0.5">(${r.aliasEn})</span>` : '';
+                item.innerHTML = `<span>${r.role}${aliasHtml}</span><span class="role-dropdown-item-note">${r.note}</span>`;
+                item.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    input.value = r.role;
+                    currentRole = r.role;
+                    closeDropdown();
+                    loadCountries();
+                });
+                dropdown.appendChild(item);
+            });
+
+            dropdown.classList.add('open');
+        }
+
+        // 💡 Kutuya tıklayınca/odaklanınca: içindeki metni otomatik seçili hale
+        // getiriyoruz (yazmaya başlarsa direkt üzerine yazsın) VE filtreyi
+        // uygulamadan TÜM rolleri gösteriyoruz — yoksa kutuda zaten "Backend
+        // Developer" yazdığı için filtre kendisiyle eşleşip tek seçenek gibi
+        // görünüyordu (gerçek bir kullanılabilirlik hatasıydı).
+        input.addEventListener('focus', () => {
+            input.select();
+            renderMatches(true);
+        });
+        input.addEventListener('input', () => renderMatches(false));
+        input.addEventListener('blur', () => setTimeout(closeDropdown, 150));
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const exact = allRoles.find(r => r.role.toLocaleLowerCase('tr-TR') === input.value.trim().toLocaleLowerCase('tr-TR'));
+                if (exact) {
+                    currentRole = exact.role;
+                    closeDropdown();
+                    loadCountries();
+                }
+            } else if (e.key === 'Escape') {
+                closeDropdown();
+            }
+        });
+    }
+
+    // 🔗 Mevcut seçimi (rol + hane tipi) URL parametresi olarak kopyalıyor —
+    // TransferKolik'teki shareBtn ile aynı yaklaşım.
+    function setupShareButton() {
+        document.getElementById('shareBtn').addEventListener('click', () => {
+            const url = new URL(window.location.href);
+            url.search = '';
+            url.searchParams.set('role', currentRole);
+            url.searchParams.set('household', currentHousehold);
+
+            navigator.clipboard.writeText(url.toString()).then(() => {
+                showToast('Link kopyalandı! 🔗');
+            }).catch(() => {
+                showToast('Kopyalanamadı, tarayıcı izin vermedi.');
+            });
+        });
+    }
+
+    // 💡 Paylaşılan bir linkle gelindiyse (?role=...&household=...), sayfa
+    // açılışında bu seçimleri otomatik uyguluyoruz.
+    function applyQueryParams() {
+        const params = new URLSearchParams(window.location.search);
+        const role = params.get('role');
+        const household = params.get('household');
+        if (role) {
+            currentRole = role;
+            document.getElementById('roleSelectInput').value = role;
+        }
+        if (household) currentHousehold = household;
+    }
+
+    async function init() {
+        applyQueryParams();
+        await Promise.all([loadRoles(), loadHouseholds()]);
+        setupRoleAutocomplete();
+        renderHouseholdToggle();
+        renderCompareControls();
+        setupShareButton();
+        setupCityChipDelegation();
+        await loadCountries();
+    }
+
+    init();
+</script>
+</body>
+</html>

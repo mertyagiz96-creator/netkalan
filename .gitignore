@@ -1,0 +1,8 @@
+netkalan.db
+netkalan.db-wal
+netkalan.db-shm
+so_survey_2025.csv
+build/
+.gradle/
+.idea/
+*.iml
