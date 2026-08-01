@@ -5,4 +5,4 @@ so_survey_2025.csv
 build/
 .gradle/
 .idea/
-*.iml
+*.iml.kotlin/
