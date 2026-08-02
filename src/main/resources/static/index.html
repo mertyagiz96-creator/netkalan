@@ -877,10 +877,8 @@
         <div style="display:flex; gap:8px; flex-wrap: wrap; justify-content: flex-end;">
             <button id="quizModeBtn" class="header-share-btn" data-i18n="quizModeBtn">🎲 Tahmin Modu</button>
             <button id="carModeBtn" class="header-share-btn" data-i18n="carModeBtn">🚗 Araç Fiyatları</button>
-            <button id="recommendModeBtn" class="header-share-btn">🧭 Bana Ülke Öner</button>
             <button id="quizBackToMenuBtn" class="header-share-btn" style="display:none;" data-i18n="backToMenu">🏠 Ana Menü</button>
             <button id="carBackToMenuBtn" class="header-share-btn" style="display:none;" data-i18n="backToMenu">🏠 Ana Menü</button>
-            <button id="recommendBackToMenuBtn" class="header-share-btn" style="display:none;">🏠 Ana Menü</button>
         </div>
     </div>
 </header>
@@ -894,7 +892,7 @@
             <div id="roleDropdown" class="role-dropdown"></div>
         </div>
 
-        <div class="sort-toggle-row" style="position: relative;">
+        <div class="sort-toggle-row" style="position: relative; gap: 8px; flex-wrap: wrap;">
             <div class="settings-panel-wrap" id="filtersMenuWrap">
                 <button id="filtersMenuBtn" class="sort-toggle-btn" data-i18n="filtersBtn">🔧 Filtreler & Sıralama</button>
                 <div id="filtersMenuPanel" class="settings-panel" style="left: 50%; transform: translateX(-50%); min-width: 280px;">
@@ -916,7 +914,21 @@
                     <div id="experienceRow" style="display:flex; flex-direction:column; gap:4px;"></div>
                 </div>
             </div>
+
+            <div class="settings-panel-wrap" id="recommendMenuWrap">
+                <button id="recommendMenuBtn" class="sort-toggle-btn">🧭 Bana Ülke Öner</button>
+                <div id="recommendMenuPanel" class="settings-panel" style="left: 50%; transform: translateX(-50%); min-width: 260px;">
+                    <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:1px; color:rgba(var(--fg-rgb),0.45); margin: 4px 0 6px 4px;">Senin İçin En Önemlisi Ne?</div>
+                    <button class="household-btn" data-priority="net" style="text-align:left;">💰 En Yüksek Net Kalan</button>
+                    <button class="household-btn" data-priority="tax" style="text-align:left; margin-top:4px;">🧾 En Düşük Vergi</button>
+                    <button class="household-btn" data-priority="cost" style="text-align:left; margin-top:4px;">🏠 En Düşük Yaşam Maliyeti</button>
+                    <button class="household-btn" data-priority="jobs" style="text-align:left; margin-top:4px;">💼 En Düşük İşsizlik</button>
+                </div>
+            </div>
         </div>
+
+        <div id="recommendResults"></div>
+
 
         <div class="country-search-wrap">
             <input id="countrySearchInput" class="country-search-input" type="text" autocomplete="off" data-i18n-placeholder="searchPlaceholder" placeholder="🔍 Ülke ara ya da listeden seç...">
@@ -968,62 +980,36 @@
             13 ülkenin sadece bir kısmı gösteriliyor — güvenilir veri bulamadığımız ülkeler listede yer almıyor.
         </div>
     </div>
-
-    <div id="recommendModeWrap" style="display:none;">
-        <p class="subtitle">Senin için en önemlisi ne? Ona göre en uygun ülkeyi bulalım (mesleğin: <b id="recommendRoleLabel"></b>)</p>
-        <div class="quiz-options" style="max-width:700px; margin: 0 auto 24px auto;">
-            <button class="quiz-option-btn" data-priority="net">
-                💰
-                <span class="quiz-role-tag">En Yüksek Net Kalan</span>
-            </button>
-            <button class="quiz-option-btn" data-priority="tax">
-                🧾
-                <span class="quiz-role-tag">En Düşük Vergi</span>
-            </button>
-            <button class="quiz-option-btn" data-priority="cost">
-                🏠
-                <span class="quiz-role-tag">En Düşük Yaşam Maliyeti</span>
-            </button>
-            <button class="quiz-option-btn" data-priority="jobs">
-                💼
-                <span class="quiz-role-tag">En Düşük İşsizlik (İş Güvenliği)</span>
-            </button>
-        </div>
-        <div id="recommendResults"></div>
-    </div>
 </div>
 
 <script>
-    // 🧭 "Bana Ülke Öner" sihirbazı — seçilen önceliğe göre mevcut ülke verisini
-    // (zaten yüklü/gerçek olan aynı veri) farklı sıralayıp en uygun 3 ülkeyi
-    // açıklamalı olarak gösteriyor. Yeni bir veri kaynağı gerekmiyor.
-    let recommendModeActive = false;
-
-    function exitRecommendMode() {
-        recommendModeActive = false;
-        document.getElementById('normalModeWrap').style.display = '';
-        document.getElementById('recommendModeWrap').style.display = 'none';
-        document.getElementById('recommendModeBtn').style.display = '';
-        document.getElementById('recommendBackToMenuBtn').style.display = 'none';
+    // 🧭 "Bana Ülke Öner" — bir mod değil, Filtreler'in yanındaki küçük bir
+    // açılır panel. Seçim yapılınca panel kapanır, sonuç ülke listesinin
+    // hemen üstüne eklenir (karşılaştırma analizi kutusuyla aynı mantık).
+    function closeRecommendMenu() {
+        document.getElementById('recommendMenuPanel').classList.remove('open');
     }
 
     function setupRecommendMode() {
-        document.getElementById('recommendModeBtn').addEventListener('click', () => {
-            if (quizModeActive) exitQuizMode();
-            if (carModeActive) exitCarMode();
-            recommendModeActive = true;
-            document.getElementById('normalModeWrap').style.display = 'none';
-            document.getElementById('recommendModeWrap').style.display = '';
-            document.getElementById('recommendModeBtn').style.display = 'none';
-            document.getElementById('recommendBackToMenuBtn').style.display = '';
-            document.getElementById('recommendRoleLabel').textContent = currentRole;
-            document.getElementById('recommendResults').innerHTML = '';
+        const btn = document.getElementById('recommendMenuBtn');
+        const panel = document.getElementById('recommendMenuPanel');
+
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            panel.classList.toggle('open');
         });
 
-        document.getElementById('recommendBackToMenuBtn').addEventListener('click', exitRecommendMode);
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#recommendMenuWrap')) {
+                panel.classList.remove('open');
+            }
+        });
 
-        document.querySelectorAll('#recommendModeWrap .quiz-option-btn').forEach(btn => {
-            btn.addEventListener('click', () => runRecommendation(btn.dataset.priority));
+        document.querySelectorAll('#recommendMenuPanel .household-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                closeRecommendMenu();
+                runRecommendation(btn.dataset.priority);
+            });
         });
     }
 
@@ -1037,6 +1023,7 @@
     async function runRecommendation(priority) {
         const container = document.getElementById('recommendResults');
         container.innerHTML = '<div class="loading-state">Analiz ediliyor...</div>';
+        container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
         try {
             const res = await fetch(`/api/countries?role=${encodeURIComponent(currentRole)}&household=${encodeURIComponent(currentHousehold)}&experience=${encodeURIComponent(currentExperience)}`);
@@ -1061,8 +1048,8 @@
             }
 
             container.innerHTML = `
-                <div class="savings-panel" style="max-width:800px; margin:0 auto;">
-                    <div class="savings-intro">${meta.icon} <b>${meta.label}</b> önceliğine göre önerilen ilk 3 ülke:</div>
+                <div class="savings-panel" style="max-width:800px; margin:0 auto 20px auto;">
+                    <div class="savings-intro">${meta.icon} <b>${meta.label}</b> önceliğine göre önerilen ilk 3 ülke (meslek: ${currentRole}):</div>
                     ${top3.map((c, idx) => `
                         <div class="home-goal-card" style="${idx === 0 ? 'border-color: var(--accent-gold); background: rgba(var(--accent-gold-rgb),0.08);' : ''}">
                             <div class="home-goal-icon">${idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}</div>
@@ -1426,7 +1413,6 @@
     function setupQuizModeToggle() {
         document.getElementById('quizModeBtn').addEventListener('click', () => {
             if (carModeActive) exitCarMode();
-            if (recommendModeActive) exitRecommendMode();
             quizModeActive = true;
             currentStreak = 0;
             document.getElementById('normalModeWrap').style.display = 'none';
@@ -2091,7 +2077,6 @@
     function setupCarModeToggle() {
         document.getElementById('carModeBtn').addEventListener('click', async () => {
             if (quizModeActive) exitQuizMode();
-            if (recommendModeActive) exitRecommendMode();
             carModeActive = true;
             document.getElementById('normalModeWrap').style.display = 'none';
             document.getElementById('carModeWrap').style.display = '';
@@ -2510,7 +2495,13 @@
                 btn.classList.add('active');
                 updateSpouseRoleVisibility();
                 loadCountries();
-                closeFiltersMenu();
+                // 👥 "Bekar" dışında bir şey seçildiyse paneli KAPATMIYORUZ —
+                // kullanıcı hemen altında beliren eş mesleği kutusunu görsün ve
+                // isterse seçsin. Sadece "Bekar" seçilirse (eş kutusu görünmez)
+                // paneli her zamanki gibi kapatıyoruz.
+                if (currentHousehold === 'single') {
+                    closeFiltersMenu();
+                }
             });
         });
     }
