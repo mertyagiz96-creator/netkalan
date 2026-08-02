@@ -782,6 +782,7 @@
         </div>
 
         <div class="controls-row" id="householdRow"></div>
+        <div class="controls-row" id="experienceRow"></div>
         <div class="controls-row" id="compareControlRow"></div>
 
         <div id="countryList" class="country-list">
@@ -917,10 +918,21 @@
 
     function exitQuizMode() {
         quizModeActive = false;
-        document.getElementById('normalModeWrap').style.display = '';
+        const normalWrap = document.getElementById('normalModeWrap');
         document.getElementById('quizModeWrap').style.display = 'none';
+        normalWrap.style.display = 'none';
         document.getElementById('quizModeBtn').style.display = '';
         document.getElementById('quizBackToMenuBtn').style.display = 'none';
+
+        // 📱 Bazı mobil tarayıcılar (özellikle iOS Safari), display:none'dan geri
+        // gelen elemanların flex/grid genişliklerini doğru yeniden hesaplamıyor —
+        // bu da "sağ tarafta çerçeve tam gelmiyor" gibi bir görünüme sebep oluyor.
+        // Bir sonraki frame'de tekrar 'block' yapıp resize event'i tetikleyerek
+        // tarayıcıyı zorla yeniden ölçüme sokuyoruz.
+        requestAnimationFrame(() => {
+            normalWrap.style.display = '';
+            window.dispatchEvent(new Event('resize'));
+        });
     }
 
     function setupQuizModeToggle() {
@@ -1070,6 +1082,23 @@
                 </div>
             `;
 
+        let carHtml = '';
+        if (c.audiA3PriceUsd) {
+            const monthsToCar = Math.ceil(c.audiA3PriceUsd / monthly);
+            const carBadge = c.audiA3PriceIsReal
+                ? '<span style="color:var(--light-green);font-size:0.7rem;font-weight:700;">✓ GERÇEK FİYAT</span>'
+                : '<span style="color:rgba(var(--fg-rgb),0.4);font-size:0.7rem;">(tahmini, Almanya fiyatından ölçeklenmiş)</span>';
+            carHtml = `
+                <div class="home-goal-card" style="background: rgba(var(--accent-gold-rgb), 0.08); border-color: rgba(var(--accent-gold-rgb), 0.3);">
+                    <div class="home-goal-icon">🚗</div>
+                    <div class="home-goal-text">
+                        Standart bir <b>Audi A3</b>'ü (bu ülkede yaklaşık <b>${formatUsd(c.audiA3PriceUsd)}</b>) ${carBadge}
+                        biriktirmen yaklaşık <b>${formatYearsMonths(monthsToCar)}</b> sürer.
+                    </div>
+                </div>
+            `;
+        }
+
         return `
             <div class="savings-panel">
                 <div class="savings-intro">Aylık <b>${formatUsd(monthly)}</b> biriktirebildiğini varsayarsak:</div>
@@ -1105,6 +1134,7 @@
                 </div>
                 ${millionHtml}
                 ${homeHtml}
+                ${carHtml}
                 <span class="savings-note">
                     ⚠️ Bu bir yapay zeka analizi değil, sabit varsayımlara (yıllık %4.5 nakit faizi, %8 hisse senedi
                     getirisi — geçmiş performans, garanti değil) dayanan matematiksel bir projeksiyondur. Ev fiyatı
@@ -1430,14 +1460,16 @@
 
     let allRoles = [];
     let allHouseholds = [];
+    let allExperienceTiers = [];
     let currentRole = 'Backend Developer';
     let currentHousehold = 'single';
+    let currentExperience = 'all';
 
     async function loadCountries() {
         const list = document.getElementById('countryList');
         list.innerHTML = '<div class="loading-state">Veriler yükleniyor...</div>';
         try {
-            const res = await fetch(`/api/countries?role=${encodeURIComponent(currentRole)}&household=${encodeURIComponent(currentHousehold)}`);
+            const res = await fetch(`/api/countries?role=${encodeURIComponent(currentRole)}&household=${encodeURIComponent(currentHousehold)}&experience=${encodeURIComponent(currentExperience)}`);
             const countries = await res.json();
             renderCountries(countries);
         } catch (e) {
@@ -1461,6 +1493,31 @@
         } catch (e) {
             console.log('Hane tipi listesi yüklenemedi.');
         }
+    }
+
+    async function loadExperienceTiers() {
+        try {
+            const res = await fetch('/api/experience-tiers');
+            allExperienceTiers = await res.json();
+        } catch (e) {
+            console.log('Deneyim kademesi listesi yüklenemedi.');
+        }
+    }
+
+    function renderExperienceToggle() {
+        const row = document.getElementById('experienceRow');
+        row.innerHTML = allExperienceTiers.map(t => `
+            <button class="household-btn ${t.key === currentExperience ? 'active' : ''}" data-key="${t.key}">${t.labelTr}</button>
+        `).join('');
+
+        row.querySelectorAll('.household-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentExperience = btn.dataset.key;
+                row.querySelectorAll('.household-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                loadCountries();
+            });
+        });
     }
 
     function renderHouseholdToggle() {
@@ -1559,6 +1616,7 @@
             url.search = '';
             url.searchParams.set('role', currentRole);
             url.searchParams.set('household', currentHousehold);
+            url.searchParams.set('experience', currentExperience);
 
             navigator.clipboard.writeText(url.toString()).then(() => {
                 showToast('Link kopyalandı! 🔗');
@@ -1574,18 +1632,21 @@
         const params = new URLSearchParams(window.location.search);
         const role = params.get('role');
         const household = params.get('household');
+        const experience = params.get('experience');
         if (role) {
             currentRole = role;
             document.getElementById('roleSelectInput').value = role;
         }
         if (household) currentHousehold = household;
+        if (experience) currentExperience = experience;
     }
 
     async function init() {
         applyQueryParams();
-        await Promise.all([loadRoles(), loadHouseholds()]);
+        await Promise.all([loadRoles(), loadHouseholds(), loadExperienceTiers()]);
         setupRoleAutocomplete();
         renderHouseholdToggle();
+        renderExperienceToggle();
         renderCompareControls();
         setupShareButton();
         setupCityChipDelegation();

@@ -20,7 +20,9 @@ data class CountryFinancials(
     val lastUpdated: String,       // "2026-08"
     val cities: List<CityOption> = emptyList(), // 🏙️ Bu ülke için seçilebilir şehirler
     val unemploymentPercent: Double? = null, // 🌍 World Bank — GERÇEK, resmi, canlı veri
-    val inflationPercent: Double? = null     // 🌍 World Bank — GERÇEK, resmi, canlı veri
+    val inflationPercent: Double? = null,    // 🌍 World Bank — GERÇEK, resmi, canlı veri
+    val audiA3PriceUsd: Double? = null,      // 🚗 Standart Audi A3 fiyatı (6 ülke gerçek, diğerleri ölçekli tahmin)
+    val audiA3PriceIsReal: Boolean = false
 )
 
 @Serializable
@@ -32,6 +34,9 @@ data class CityOption(
     val rentMultiplier: Double,
     val expenseMultiplier: Double
 )
+
+@Serializable
+data class ExperienceInfo(val key: String, val labelTr: String)
 
 @Serializable
 data class HouseholdInfo(val key: String, val labelTr: String)
@@ -361,6 +366,53 @@ object DatabaseClient {
         if (usTotal <= 0) return null
         return NY_REAL_SCHOOL_COST_USD * (countryTotal / usTotal)
     }
+
+    // 🚗 Audi A3 (standart/taban model) fiyatı — 6 ülke için GERÇEK, resmi üretici
+    // fiyatlarından (2026, güncel döviz kuruyla USD'ye çevrilmiş). Diğer ülkeler
+    // için gerçek fiyat bulunamadı — Almanya'nın GERÇEK fiyatı, elimizdeki GERÇEK
+    // WhereNext yaşam maliyeti endeksiyle ORANTILI ölçekleniyor (okul ücretiyle
+    // aynı yöntem). Kaynaklar: Audi resmi siteleri, Audi Türkiye, Audi Kanada,
+    // audi.de, güncel Temmuz/Ağustos 2026 fiyat listeleri.
+    private val realAudiA3PriceUsd = mapOf(
+        "US" to 41395.0,
+        "DE" to 37570.0,
+        "TR" to 79550.0,
+        "CA" to 33860.0,
+        "CH" to 53280.0,
+        "FR" to 41060.0
+    )
+
+    data class CarPriceEstimate(val priceUsd: Double, val isReal: Boolean)
+
+    private fun estimateAudiA3PriceUsd(countryCode: String): CarPriceEstimate? {
+        realAudiA3PriceUsd[countryCode]?.let { return CarPriceEstimate(it, true) }
+
+        val deReal = costOfLivingCache["DE"] ?: return null
+        val countryReal = costOfLivingCache[countryCode] ?: return null
+        val deAnchor = realAudiA3PriceUsd["DE"] ?: return null
+        if (deReal.monthlyTotalUsd <= 0) return null
+
+        val scaled = deAnchor * (countryReal.monthlyTotalUsd / deReal.monthlyTotalUsd)
+        return CarPriceEstimate(scaled, false)
+    }
+    // 📅 Deneyim kademeleri — tech rollerde SO anketinin GERÇEK YearsCodePro
+    // verisinden hesaplanıyor. Gerçek veri yetersizse (küçük örneklem/non-tech
+    // rol) bu ÇARPANLAR devreye giriyor — "all" (tüm deneyimler, mevcut
+    // tahmine dokunmuyor) baz alınarak ölçekleniyor.
+    private val experienceTiers = linkedMapOf(
+        "all" to "Tüm Deneyim Seviyeleri",
+        "0-5" to "0-5 Yıl",
+        "5-10" to "5-10 Yıl",
+        "10+" to "10+ Yıl"
+    )
+    private val experienceFallbackMultipliers = mapOf(
+        "all" to 1.0, "0-5" to 0.75, "5-10" to 1.0, "10+" to 1.35
+    )
+
+    fun fetchAllExperienceTiers(): List<ExperienceInfo> {
+        return experienceTiers.map { (key, label) -> ExperienceInfo(key, label) }
+    }
+
     fun fetchAllHouseholds(): List<HouseholdInfo> {
         return householdSettings.map { (key, adj) -> HouseholdInfo(key, adj.labelTr) }
     }
@@ -375,7 +427,7 @@ object DatabaseClient {
 
         return allCountries.flatMap { country ->
             allRoles.map { role ->
-                val real = realSalaryCache["$country|$role"]
+                val real = realSalaryCache["$country|$role|all"]
                 DataCoverageRow(
                     countryCode = country,
                     role = role,
@@ -387,9 +439,10 @@ object DatabaseClient {
         }.sortedWith(compareBy({ it.countryCode }, { it.role }))
     }
 
-    fun fetchAllCountries(role: String = "Backend Developer", household: String = "single"): List<CountryFinancials> {
+    fun fetchAllCountries(role: String = "Backend Developer", household: String = "single", experience: String = "all"): List<CountryFinancials> {
         val result = mutableListOf<CountryFinancials>()
         val resolvedRole = if (roleMultipliers.containsKey(role) || nonTechRoleMultipliers.containsKey(role)) role else "Backend Developer"
+        val resolvedExperience = if (experienceTiers.containsKey(experience)) experience else "all"
         val adj = householdSettings[household] ?: householdSettings.getValue("single")
         val sql = """
             SELECT country_code, country_name_tr, role, gross_annual_usd, tax_wedge_percent,
@@ -407,18 +460,30 @@ object DatabaseClient {
                             val countryCode = rs.getString("country_code")
                             val roleForRow = rs.getString("role")
                             val macro = macroDataCache[countryCode]
+                            val expMultiplier = experienceFallbackMultipliers[resolvedExperience] ?: 1.0
 
-                            // 📊 Önce GERÇEK Stack Overflow verisine bakıyoruz. Yeterli örneklem
-                            // varsa (N >= 10) onu kullanıyoruz, yoksa eski tahmini/ölçeklenmiş
-                            // rakama düşüyoruz — ama kaynak metninde hangisi olduğunu net söylüyoruz.
-                            val real = realSalaryCache["$countryCode|$roleForRow"]
-                            val useReal = real != null && real.sampleSize >= MIN_SAMPLE_SIZE_FOR_REAL_DATA
+                            // 📊 KADEMELİ arama: 1) bu deneyim kademesi için GERÇEK medyan var mı?
+                            // 2) yoksa "tüm deneyimler" GERÇEK medyanı var mı, varsa deneyim
+                            // çarpanıyla ölçekle. 3) o da yoksa eski tahmini rakama deneyim
+                            // çarpanını uygula. Her durumda kaynak metninde HANGİSİ olduğu net yazıyor.
+                            val realForTier = realSalaryCache["$countryCode|$roleForRow|$resolvedExperience"]
+                            val realForAll = realSalaryCache["$countryCode|$roleForRow|all"]
 
-                            val gross = if (useReal) real!!.medianUsd else rs.getDouble("gross_annual_usd")
-                            val salarySourceFinal = if (useReal) {
-                                "Stack Overflow Developer Survey 2025 — GERÇEK medyan (N=${real!!.sampleSize} yanıt)"
+                            val gross: Double
+                            val salarySourceFinal: String
+
+                            if (realForTier != null && realForTier.sampleSize >= MIN_SAMPLE_SIZE_FOR_REAL_DATA) {
+                                gross = realForTier.medianUsd
+                                salarySourceFinal = "Stack Overflow Developer Survey 2025 — GERÇEK medyan, ${experienceTiers[resolvedExperience]} (N=${realForTier.sampleSize} yanıt)"
+                            } else if (resolvedExperience != "all" && realForAll != null && realForAll.sampleSize >= MIN_SAMPLE_SIZE_FOR_REAL_DATA) {
+                                gross = realForAll.medianUsd * expMultiplier
+                                salarySourceFinal = "Stack Overflow Survey — tüm deneyimler GERÇEK medyanı (N=${realForAll.sampleSize}) × deneyim çarpanı (tahmini ayarlama)"
+                            } else if (realForAll != null && realForAll.sampleSize >= MIN_SAMPLE_SIZE_FOR_REAL_DATA) {
+                                gross = realForAll.medianUsd
+                                salarySourceFinal = "Stack Overflow Developer Survey 2025 — GERÇEK medyan (N=${realForAll.sampleSize} yanıt)"
                             } else {
-                                rs.getString("salary_source")
+                                gross = rs.getDouble("gross_annual_usd") * expMultiplier
+                                salarySourceFinal = rs.getString("salary_source") + if (resolvedExperience != "all") " × deneyim çarpanı (tahmini)" else ""
                             }
 
                             // 👪 Hane tipi vergi kamasını düşürüyor (aile avantajları), 0'ın
@@ -460,6 +525,8 @@ object DatabaseClient {
                             val netAnnual = gross * (1.0 - taxWedge / 100.0)
                             val monthlyNetRemaining = (netAnnual / 12.0) - rent - expense
 
+                            val carEstimate = estimateAudiA3PriceUsd(countryCode)
+
                             result.add(
                                 CountryFinancials(
                                     countryCode = countryCode,
@@ -476,7 +543,9 @@ object DatabaseClient {
                                     lastUpdated = rs.getString("last_updated"),
                                     cities = cityOptionsByCountry[countryCode] ?: emptyList(),
                                     unemploymentPercent = macro?.unemploymentPercent,
-                                    inflationPercent = macro?.inflationPercent
+                                    inflationPercent = macro?.inflationPercent,
+                                    audiA3PriceUsd = carEstimate?.priceUsd,
+                                    audiA3PriceIsReal = carEstimate?.isReal ?: false
                                 )
                             )
                         }

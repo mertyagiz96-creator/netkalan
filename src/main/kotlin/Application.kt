@@ -115,13 +115,19 @@ fun main() {
                 call.respond(DatabaseClient.fetchDataCoverage())
             }
 
-            // 💰 ?role= ve ?household= parametreleriyle filtreleniyor, verilmezse
+            // 📅 Seçilebilir deneyim kademeleri (0-5 / 5-10 / 10+ / Tüm Deneyimler)
+            get("/api/experience-tiers") {
+                call.respond(DatabaseClient.fetchAllExperienceTiers())
+            }
+
+            // 💰 ?role=, ?household= ve ?experience= parametreleriyle filtreleniyor.
             // sırasıyla "Backend Developer" ve "single" varsayılan. Sonuç en yüksek
             // net kalan tutardan en düşüğe sıralı dönüyor.
             get("/api/countries") {
                 val role = call.request.queryParameters["role"] ?: "Backend Developer"
                 val household = call.request.queryParameters["household"] ?: "single"
-                val countries = DatabaseClient.fetchAllCountries(role, household)
+                val experience = call.request.queryParameters["experience"] ?: "all"
+                val countries = DatabaseClient.fetchAllCountries(role, household, experience)
                 call.respond(countries)
             }
         }

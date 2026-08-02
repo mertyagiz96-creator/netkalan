@@ -27,6 +27,23 @@ object StackOverflowSalaryClient {
 
     data class RealSalary(val medianUsd: Double, val sampleSize: Int)
 
+    // 📅 Deneyim kademeleri — SO anketinin "YearsCodePro" (profesyonel kodlama
+    // deneyimi yıl olarak) alanından gerçek olarak hesaplanıyor.
+    private fun experienceTierFromYearsCodePro(raw: String?): String {
+        if (raw == null) return "all"
+        val lower = raw.trim().lowercase()
+        val years = when {
+            lower.contains("less than 1") -> 0
+            lower.contains("more than 50") -> 51
+            else -> lower.toIntOrNull() ?: return "all"
+        }
+        return when {
+            years <= 5 -> "0-5"
+            years <= 10 -> "5-10"
+            else -> "10+"
+        }
+    }
+
     // 🌍 Anketteki ülke isimlerini bizim ISO kodlarımıza çeviriyor. SO'nun kullandığı
     // tam metin format değişebiliyor, bu yüzden birkaç varyant ekliyoruz.
     private val countryNameToCode = mapOf(
@@ -92,9 +109,17 @@ object StackOverflowSalaryClient {
                         val comp = compRaw.toDoubleOrNull() ?: continue
                         if (comp < 5000 || comp > 2_000_000) continue // 🧹 uç/hatalı veriyi ele
 
+                        val yearsCodeProRaw = try { record.get("YearsCodePro") } catch (e: Exception) { null }
+                        val expTier = experienceTierFromYearsCodePro(yearsCodeProRaw)
+
                         for (dt in devTypeRaw.split(";").map { it.trim() }) {
                             val role = matchRoleFromDevType(dt) ?: continue
-                            salaryLists.getOrPut("$country|$role") { mutableListOf() }.add(comp)
+                            // "all" kademesi HER ZAMAN dolduruluyor (deneyim filtresi olmadan bakış açısı),
+                            // ayrıca gerçek deneyim kademesi biliniyorsa ona özel bir kayıt da ekleniyor.
+                            salaryLists.getOrPut("$country|$role|all") { mutableListOf() }.add(comp)
+                            if (expTier != "all") {
+                                salaryLists.getOrPut("$country|$role|$expTier") { mutableListOf() }.add(comp)
+                            }
                         }
                     }
                 }
