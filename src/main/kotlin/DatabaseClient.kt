@@ -51,7 +51,7 @@ object DatabaseClient {
     // yeni ülke, yeni kolon vb.) elle 1 artırıyoruz. Uygulama açılışta bu sayıyı
     // veritabanındaki kayıtlı değerle karşılaştırıyor; uyuşmazsa netkalan.db'yi
     // ELLE SİLMEYE GEREK KALMADAN kendi kendine sıfırlayıp yeniden seed ediyor.
-    private const val SCHEMA_VERSION = 3
+    private const val SCHEMA_VERSION = 4
 
     // 🌍 World Bank'ten arka planda çekilen GERÇEK işsizlik/enflasyon verisi burada
     // önbelleğe alınıyor (Application.kt başlangıçta doldurup güncelliyor).
@@ -124,7 +124,7 @@ object DatabaseClient {
     private val nationalAvgWageUsd = mapOf(
         "US" to 65000.0, "DE" to 58000.0, "GB" to 48000.0, "NL" to 64000.0,
         "TR" to 15000.0, "IN" to 3000.0, "BR" to 10000.0, "CA" to 59000.0,
-        "PL" to 24000.0, "AU" to 62000.0, "CH" to 72000.0, "FR" to 40000.0, "JP" to 35000.0
+        "PL" to 24000.0, "AU" to 62000.0, "CH" to 95000.0, "FR" to 40000.0, "JP" to 35000.0
     )
 
     // 👔 Tech-olmayan meslekler için, dünya genelinde tipik olarak ulusal ortalama

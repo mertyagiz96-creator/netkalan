@@ -816,7 +816,7 @@
 
     async function startQuizRound() {
         const container = document.getElementById('quizContainer');
-        container.innerHTML = '<div class="loading-state">Soru hazırlanıyor...</div>';
+        container.innerHTML = '<div class="loading-state">Soru hazırlanıyor... (sunucu uykudan uyanıyorsa 30-60 saniye sürebilir)</div>';
 
         const roleA = pickRandom(allRoles).role;
         let roleB = pickRandom(allRoles).role;
@@ -824,17 +824,34 @@
         let countryB = pickRandom(QUIZ_COUNTRY_CODES);
         while (countryB === countryA) countryB = pickRandom(QUIZ_COUNTRY_CODES);
 
+        // ⏱️ 25 saniyeden uzun sürerse (sunucu uyanmıyor/takılıysa) kullanıcıyı
+        // sonsuza kadar bekletmek yerine hata + tekrar dene butonu gösteriyoruz.
+        const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('timeout')), 25000)
+        );
+
         try {
-            const [dataA, dataB] = await Promise.all([
+            const fetchPromise = Promise.all([
                 fetch(`/api/countries?role=${encodeURIComponent(roleA)}&household=single`).then(r => r.json()),
                 fetch(`/api/countries?role=${encodeURIComponent(roleB)}&household=single`).then(r => r.json())
             ]);
+            const [dataA, dataB] = await Promise.race([fetchPromise, timeoutPromise]);
             const entryA = dataA.find(c => c.countryCode === countryA);
             const entryB = dataB.find(c => c.countryCode === countryB);
-            if (!entryA || !entryB) { container.innerHTML = '<div class="loading-state">Veri bulunamadı, tekrar dene.</div>'; return; }
+            if (!entryA || !entryB) {
+                container.innerHTML = `<div class="loading-state">Veri bulunamadı. <button id="quizRetryBtn" class="compare-toggle-btn active">🔄 Tekrar Dene</button></div>`;
+                document.getElementById('quizRetryBtn').addEventListener('click', startQuizRound);
+                return;
+            }
             renderQuizRound(entryA, roleA, entryB, roleB);
         } catch (e) {
-            container.innerHTML = '<div class="loading-state">❌ Soru yüklenemedi.</div>';
+            container.innerHTML = `
+                <div class="loading-state">
+                    ⏱️ Sunucudan yanıt gelmedi (muhtemelen uykudan yeni uyanıyor).
+                    <br><button id="quizRetryBtn" class="compare-toggle-btn active" style="margin-top:12px;">🔄 Tekrar Dene</button>
+                </div>
+            `;
+            document.getElementById('quizRetryBtn').addEventListener('click', startQuizRound);
         }
     }
 
