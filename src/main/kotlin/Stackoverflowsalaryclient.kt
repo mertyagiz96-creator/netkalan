@@ -3,6 +3,7 @@ import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
+import io.ktor.utils.io.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.apache.commons.csv.CSVFormat
@@ -21,7 +22,7 @@ object StackOverflowSalaryClient {
     private const val CSV_URL = "https://github.com/StackExchange/Survey/raw/refs/heads/main/packages/archive/2025/results.csv"
     private val localCacheFile = File("so_survey_2025.csv")
     private val client = HttpClient(CIO) {
-        install(HttpTimeout) { requestTimeoutMillis = 180_000 }
+        install(HttpTimeout) { requestTimeoutMillis = 360_000 }
     }
 
     data class RealSalary(val medianUsd: Double, val sampleSize: Int)
@@ -103,6 +104,12 @@ object StackOverflowSalaryClient {
 
     // 💾 CSV'yi diske önbelleğe alıyoruz — her sunucu yeniden başlatmasında onlarca
     // MB indirmeyelim diye. 30 günden eskiyse (ya da hiç yoksa) tekrar indiriyor.
+    //
+    // ⚠️ ÖNEMLİ: Dosyayı ASLA tamamen hafızaya (ByteArray) almıyoruz — 512MB RAM'li
+    // ücretsiz sunucularda 40-100MB'lık bir dosyayı bir kerede hafızaya yığmak
+    // OOM (bellek yetersizliği) riski taşıyor. Bunun yerine HTTP yanıtını küçük
+    // parçalar (chunk) halinde OKUYUP DOĞRUDAN DİSKE YAZIYORUZ — aynı anda
+    // hafızada sadece birkaç KB'lık bir arabellek tutuluyor.
     private suspend fun downloadIfStale(): File? {
         val isStale = !localCacheFile.exists() ||
                 Instant.now().minus(30, ChronoUnit.DAYS).isAfter(Instant.ofEpochMilli(localCacheFile.lastModified()))
@@ -110,11 +117,30 @@ object StackOverflowSalaryClient {
         if (!isStale) return localCacheFile
 
         return try {
-            println("📥 Stack Overflow anket verisi indiriliyor (ilk seferde birkaç dakika sürebilir)...")
-            val response: HttpResponse = client.get(CSV_URL)
-            val bytes = response.readBytes()
-            localCacheFile.writeBytes(bytes)
-            println("✅ Stack Overflow anket verisi indirildi (~${bytes.size / 1_000_000} MB).")
+            println("📥 Stack Overflow anket verisi indiriliyor (gerçek streaming modunda)...")
+
+            withContext(Dispatchers.IO) {
+                // ⚠️ ÖNEMLİ: client.get(url) KULLANMIYORUZ — Ktor o fonksiyonda yanıtı
+                // önce tamamen hafızaya "kaydediyor" (SavedCall mekanizması), bizim
+                // streaming döngümüz devreye girmeden OOM oluyordu. prepareGet +
+                // execute { } gerçek, hiç buferlemeyen streaming sağlıyor.
+                client.prepareGet(CSV_URL).execute { httpResponse ->
+                    val channel: ByteReadChannel = httpResponse.bodyAsChannel()
+                    localCacheFile.outputStream().use { output ->
+                        val buffer = ByteArray(8192)
+                        var totalBytes = 0L
+                        while (!channel.isClosedForRead) {
+                            val bytesRead = channel.readAvailable(buffer, 0, buffer.size)
+                            if (bytesRead == -1) break
+                            if (bytesRead > 0) {
+                                output.write(buffer, 0, bytesRead)
+                                totalBytes += bytesRead
+                            }
+                        }
+                        println("✅ Stack Overflow anket verisi indirildi (~${totalBytes / 1_000_000} MB, gerçek streaming).")
+                    }
+                }
+            }
             localCacheFile
         } catch (e: Exception) {
             println("🔥 SO Survey indirme hatası: ${e.message}")
