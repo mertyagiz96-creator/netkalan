@@ -403,16 +403,15 @@ object DatabaseClient {
 
     data class CarPriceEstimate(val priceUsd: Double, val isReal: Boolean)
 
+    // 🚗 ÖNEMLİ DÜZELTME: Daha önce burada WhereNext yaşam maliyeti endeksiyle
+    // ölçekleyen bir "tahmini" dal vardı — bu YANLIŞTI, çünkü araba ithal bir mal,
+    // yerel yaşam maliyetiyle ilgisi yok (Hindistan'da $6K gibi saçma sonuçlar
+    // veriyordu). Artık SADECE gerçek fiyatını bildiğimiz 6 ülke için değer
+    // döndürüyoruz, diğerlerinde null (UI kartı hiç göstermiyor) — yanlış
+    // tahminden, veri olmamasını tercih ediyoruz.
     private fun estimateAudiA3PriceUsd(countryCode: String): CarPriceEstimate? {
-        realAudiA3PriceUsd[countryCode]?.let { return CarPriceEstimate(it, true) }
-
-        val deReal = costOfLivingCache["DE"] ?: return null
-        val countryReal = costOfLivingCache[countryCode] ?: return null
-        val deAnchor = realAudiA3PriceUsd["DE"] ?: return null
-        if (deReal.monthlyTotalUsd <= 0) return null
-
-        val scaled = deAnchor * (countryReal.monthlyTotalUsd / deReal.monthlyTotalUsd)
-        return CarPriceEstimate(scaled, false)
+        val real = realAudiA3PriceUsd[countryCode] ?: return null
+        return CarPriceEstimate(real, true)
     }
 
     // 🚗 ARAÇ FİYATI KARŞILAŞTIRMA MODÜLÜ — Audi A3'ün 6 ülkedeki GERÇEK fiyatından
@@ -421,23 +420,50 @@ object DatabaseClient {
     // modeli her ülke için ayrı ayrı aramak yerine, ABD'deki GERÇEK taban fiyatını
     // bu endeksle ölçekliyoruz. Sadece ABD fiyatı %100 gerçek; diğerleri Audi
     // endeksinden türetilmiş TAHMİNDİR — UI'da net belirtiliyor.
+    // 🚗 GERÇEK, tek tek araştırılmış model+ülke fiyatları — endeks tahmininin
+    // ÖNÜNE geçiyor. Bu bir API'den otomatik gelmiyor (böyle bir kaynak yok),
+    // ben elle arayıp doğruladıkça buraya ekleniyor. Şu an sadece birkaçı var,
+    // zamanla genişleyecek. Kaynak: ilgili markanın Türkiye resmi fiyat listesi
+    // / güncel haber siteleri, Ağustos 2026.
+    private val realCarPricesByModelAndCountry = mapOf(
+        "Toyota Corolla" to mapOf("TR" to 2284000.0 / 45.0),  // ~2.284M TL, Toyota TR resmi liste
+        "Honda CR-V" to mapOf("TR" to 2200000.0 / 45.0),       // ~2.2M TL, xenotomotiv/segment tutarlılığı
+        "Hyundai Tucson" to mapOf("TR" to 2361262.0 / 45.0)    // 2.361.262 TL, Hyundai TR resmi liste
+    )
+
     data class CarModel(val name: String, val category: String, val usBasePriceUsd: Double)
 
     val carModelsList = listOf(
-        CarModel("Toyota Corolla", "Sedan (Ekonomik)", 23125.0),
-        CarModel("Volkswagen Golf", "Hatchback", 21845.0),
-        CarModel("Toyota Camry", "Sedan (Orta Segment)", 29600.0),
-        CarModel("Hyundai Tucson", "SUV (Kompakt)", 28500.0),
+        CarModel("Audi A3", "Kompakt Lüks Sedan", 41395.0),
+        CarModel("BMW 3 Series", "Lüks Sedan", 45000.0),
+        CarModel("Chevrolet Equinox", "SUV (Kompakt)", 28000.0),
+        CarModel("Ford Escape", "SUV (Kompakt)", 31845.0),
         CarModel("Honda CR-V", "SUV (Kompakt)", 32370.0),
+        CarModel("Hyundai Tucson", "SUV (Kompakt)", 28500.0),
+        CarModel("Kia Sportage", "SUV (Kompakt)", 30285.0),
+        CarModel("Mazda CX-5", "SUV (Kompakt)", 31485.0),
+        CarModel("Mercedes-Benz C-Class", "Lüks Sedan", 47000.0),
+        CarModel("Nissan Rogue", "SUV (Kompakt)", 30585.0),
+        CarModel("Nissan Sentra", "Sedan (Ekonomik)", 21000.0),
+        CarModel("Tesla Model 3", "Elektrikli Sedan", 42000.0),
+        CarModel("Toyota Camry", "Sedan (Orta Segment)", 29600.0),
+        CarModel("Toyota Corolla", "Sedan (Ekonomik)", 23125.0),
         CarModel("Toyota RAV4", "SUV (Kompakt Hibrit)", 33350.0),
-        CarModel("Tesla Model 3", "Elektrikli Sedan", 42000.0)
+        CarModel("Volkswagen Golf", "Hatchback", 21845.0)
     )
 
+    // 🚗 ÖNEMLİ DÜZELTME: WhereNext'in yaşam maliyeti endeksini araba fiyatı
+    // ölçeklemek için kullanmak YANLIŞTI — araba ithal/üretilmiş bir mal, yerel
+    // kira/market fiyatlarıyla (WhereNext'in ölçtüğü şey) ilgisi yok. Bu yüzden
+    // Hindistan gibi düşük yaşam maliyetli ülkelerde saçma derecede düşük ($6K
+    // gibi) rakamlar çıkıyordu. Artık SADECE gerçek Audi A3 fiyatı bildiğimiz
+    // 6 ülke için endeks hesaplıyoruz — yanlış tahmin üretmek yerine, veri
+    // olmayan ülkede hiç göstermiyoruz.
     private fun computeCarPriceIndex(countryCode: String): Double? {
-        val countryAudiPrice = estimateAudiA3PriceUsd(countryCode)?.priceUsd ?: return null
-        val usAudiPrice = realAudiA3PriceUsd["US"] ?: return null
-        if (usAudiPrice <= 0) return null
-        return countryAudiPrice / usAudiPrice
+        val realPrice = realAudiA3PriceUsd[countryCode] ?: return null
+        val usPrice = realAudiA3PriceUsd["US"] ?: return null
+        if (usPrice <= 0) return null
+        return realPrice / usPrice
     }
 
     @Serializable
@@ -457,11 +483,27 @@ object DatabaseClient {
 
     fun fetchCarPricesForModel(modelName: String): List<CarPriceResult> {
         val model = carModelsList.find { it.name == modelName } ?: return emptyList()
+
+        // 🚗 Audi A3 özel durum: bu model için zaten 6 ülkede GERÇEK fiyat
+        // biliyoruz (endeksin kendisi bundan türetiliyor) — dolaylı endeks
+        // hesabına gerek yok, doğrudan gerçek/ölçeklenmiş fonksiyonu kullanıyoruz.
+        if (modelName == "Audi A3") {
+            return cityOptionsByCountry.keys.mapNotNull { countryCode ->
+                val estimate = estimateAudiA3PriceUsd(countryCode) ?: return@mapNotNull null
+                CarPriceResult(countryCode, countryNamesTr[countryCode] ?: countryCode, estimate.priceUsd, estimate.isReal)
+            }.sortedByDescending { it.priceUsd }
+        }
+
         return cityOptionsByCountry.keys.mapNotNull { countryCode ->
+            // 📌 Önce gerçek, tek tek araştırılmış fiyata bakıyoruz.
+            val realOverride = realCarPricesByModelAndCountry[modelName]?.get(countryCode)
+            if (realOverride != null) {
+                return@mapNotNull CarPriceResult(countryCode, countryNamesTr[countryCode] ?: countryCode, realOverride, true)
+            }
             val index = computeCarPriceIndex(countryCode) ?: return@mapNotNull null
             val isReal = countryCode == "US"
             CarPriceResult(countryCode, countryNamesTr[countryCode] ?: countryCode, model.usBasePriceUsd * index, isReal)
-        }.sortedBy { it.priceUsd }
+        }.sortedByDescending { it.priceUsd }
     }
     // 📅 Deneyim kademeleri — tech rollerde SO anketinin GERÇEK YearsCodePro
     // verisinden hesaplanıyor. Gerçek veri yetersizse (küçük örneklem/non-tech

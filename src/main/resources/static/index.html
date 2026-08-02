@@ -786,11 +786,11 @@
             <span class="logo-text">Net<span class="logo-text-accent">Kalan</span></span>
         </div>
         <div style="display:flex; gap:8px; flex-wrap: wrap; justify-content: flex-end;">
+            <button id="shareBtn" class="header-share-btn">🔗 Paylaş</button>
             <button id="quizModeBtn" class="header-share-btn">🎲 Tahmin Modu</button>
             <button id="carModeBtn" class="header-share-btn">🚗 Araç Fiyatları</button>
             <button id="quizBackToMenuBtn" class="header-share-btn" style="display:none;">🏠 Ana Menüye Dön</button>
             <button id="carBackToMenuBtn" class="header-share-btn" style="display:none;">🏠 Ana Menüye Dön</button>
-            <button id="shareBtn" class="header-share-btn">🔗 Paylaş</button>
         </div>
     </div>
 </header>
@@ -806,12 +806,13 @@
 
         <div class="controls-row" id="householdRow"></div>
         <div class="controls-row" id="experienceRow"></div>
-        <div class="controls-row" id="compareControlRow"></div>
 
         <div class="country-search-wrap">
             <input id="countrySearchInput" class="country-search-input" type="text" autocomplete="off" placeholder="🔍 Ülke ara ya da listeden seç...">
             <div id="countrySearchDropdown" class="role-dropdown"></div>
         </div>
+
+        <div class="controls-row" id="compareControlRow"></div>
 
         <div id="countryList" class="country-list">
             <div class="loading-state">Veriler yükleniyor...</div>
@@ -837,15 +838,26 @@
     </div>
 
     <div id="carModeWrap" style="display:none;">
-        <p class="subtitle">Bir model seç, 13 ülkedeki tahmini/gerçek fiyatını gör</p>
-        <div class="controls-row" id="carModelRow"></div>
+        <p class="subtitle">Bir model seç, 6 ülkedeki gerçek/tahmini fiyatını gör</p>
+        <div class="role-select-wrap" id="carModelSelectWrap">
+            <span class="role-select-label">Araç Modeli Seç</span>
+            <input id="carModelSelectInput" class="role-select-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Marka veya model yazın...">
+            <div id="carModelDropdown" class="role-dropdown"></div>
+        </div>
+        <div class="country-search-wrap">
+            <input id="carCountrySearchInput" class="country-search-input" type="text" autocomplete="off" placeholder="🔍 Ülke ara ya da listeden seç...">
+            <div id="carCountrySearchDropdown" class="role-dropdown"></div>
+        </div>
         <div id="carPriceResults" class="country-list"></div>
         <div class="disclaimer">
-            <b>⚠️ Veri notu:</b> Sadece <b>ABD fiyatı gerçek</b> (üretici resmi MSRP'si).
-            Diğer ülkeler, Audi A3'ün 6 ülkedeki gerçek fiyatından türetilen bir
-            "ülke araç fiyatı endeksi" (ithalat vergisi/ÖTV, kâr marjı farklarını
-            yakalayan) ABD fiyatına uygulanarak TAHMİN edilmiştir — o modelin o
-            ülkedeki gerçek bayi fiyatı değildir, kıyaslama amaçlı yönlendirici bilgidir.
+            <b>⚠️ Veri notu:</b> Bu listede sadece <b>gerçek fiyatını bildiğimiz 6 ülke</b> gösteriliyor
+            (ABD, Almanya, Türkiye, Kanada, İsviçre, Fransa — Audi A3'ün resmi üretici fiyatlarından).
+            Diğer 7 ülke için (İngiltere, Hollanda, Hindistan, Brezilya, Polonya, Avustralya, Japonya)
+            önceden yaşam maliyeti endeksiyle bir tahmin yapıyorduk, ama bunun arabalar için (ithal/
+            üretilmiş mal oldukları için yerel yaşam maliyetiyle ilgisi olmadığından) yanlış sonuçlar
+            verdiğini fark ettik — o yüzden artık yanlış tahmin göstermek yerine hiç göstermiyoruz.
+            Diğer modeller (Corolla, Golf vb.) için ABD fiyatı gerçek, diğer 5 ülke Audi'nin gerçek
+            fiyat oranından türetilmiş tahmindir.
         </div>
     </div>
 </div>
@@ -1491,6 +1503,8 @@
     let allCarModels = [];
     let currentCarModel = '';
     let carModeActive = false;
+    let lastCarPrices = [];
+    let currentCarCountrySearch = '';
 
     async function loadCarModels() {
         try {
@@ -1502,21 +1516,59 @@
         }
     }
 
-    function renderCarModelToggle() {
-        const row = document.getElementById('carModelRow');
-        row.innerHTML = allCarModels.map(m => `
-            <button class="household-btn ${m.name === currentCarModel ? 'active' : ''}" data-model="${m.name}">
-                ${m.name}<br><span style="font-size:0.65rem; opacity:0.6;">${m.category}</span>
-            </button>
-        `).join('');
+    // 🚗 Marka adına göre alfabetik sıralama (örn. "Audi A3" -> "Audi", "Volkswagen
+    // Golf" -> "Volkswagen") — kullanıcı marka bazlı A'dan Z'ye taramak istiyor.
+    function getCarBrand(modelName) {
+        return modelName.split(' ')[0];
+    }
 
-        row.querySelectorAll('.household-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                currentCarModel = btn.dataset.model;
-                row.querySelectorAll('.household-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                loadCarPrices();
+    function setupCarModelAutocomplete() {
+        const input = document.getElementById('carModelSelectInput');
+        const dropdown = document.getElementById('carModelDropdown');
+
+        function closeDropdown() {
+            dropdown.classList.remove('open');
+            dropdown.innerHTML = '';
+        }
+
+        function renderMatches(showAll) {
+            const query = showAll ? '' : input.value.trim().toLocaleLowerCase('tr-TR');
+            const sorted = [...allCarModels].sort((a, b) => getCarBrand(a.name).localeCompare(getCarBrand(b.name), 'tr'));
+            const matches = sorted.filter(m => m.name.toLocaleLowerCase('tr-TR').includes(query));
+
+            dropdown.innerHTML = '';
+            if (matches.length === 0) { closeDropdown(); return; }
+
+            matches.forEach(m => {
+                const item = document.createElement('div');
+                item.className = 'role-dropdown-item' + (m.name === currentCarModel ? ' active-role' : '');
+                item.innerHTML = `<span>${m.name}</span><span class="role-dropdown-item-note">${m.category}</span>`;
+                item.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    input.value = m.name;
+                    currentCarModel = m.name;
+                    closeDropdown();
+                    loadCarPrices();
+                });
+                dropdown.appendChild(item);
             });
+
+            dropdown.classList.add('open');
+        }
+
+        input.addEventListener('focus', () => {
+            input.value = '';
+            renderMatches(true);
+        });
+        input.addEventListener('input', () => renderMatches(false));
+        input.addEventListener('blur', () => {
+            setTimeout(() => {
+                closeDropdown();
+                if (!input.value.trim()) input.value = currentCarModel;
+            }, 150);
+        });
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeDropdown();
         });
     }
 
@@ -1533,13 +1585,19 @@
     }
 
     function renderCarPrices(prices) {
+        lastCarPrices = prices;
         const container = document.getElementById('carPriceResults');
-        if (prices.length === 0) {
-            container.innerHTML = '<div class="loading-state">Veri bulunamadı.</div>';
+
+        const filtered = currentCarCountrySearch
+            ? prices.filter(p => p.countryNameTr.toLocaleLowerCase('tr-TR').includes(currentCarCountrySearch))
+            : prices;
+
+        if (filtered.length === 0) {
+            container.innerHTML = '<div class="loading-state">🔍 Aramanla eşleşen ülke bulunamadı.</div>';
             return;
         }
 
-        container.innerHTML = prices.map((p, idx) => `
+        container.innerHTML = filtered.map((p, idx) => `
             <div class="country-card">
                 <div class="country-card-top">
                     <div class="country-name-row">
@@ -1549,11 +1607,59 @@
                     </div>
                     <div class="net-remaining-box">
                         <span class="net-remaining" style="font-size:1.3rem;">${formatUsd(p.priceUsd)}</span>
-                        <span class="net-remaining-pct">${p.isReal ? '<span style="color:var(--light-green);font-weight:700;">✓ GERÇEK (üretici fiyatı)</span>' : 'tahmini (Audi endeksinden ölçeklenmiş)'}</span>
+                        ${p.isReal ? '<span class="net-remaining-pct" style="color:var(--light-green);font-weight:700;">✓ GERÇEK</span>' : ''}
                     </div>
                 </div>
             </div>
         `).join('');
+    }
+
+    function setupCarCountrySearch() {
+        const input = document.getElementById('carCountrySearchInput');
+        const dropdown = document.getElementById('carCountrySearchDropdown');
+
+        function closeDropdown() {
+            dropdown.classList.remove('open');
+            dropdown.innerHTML = '';
+        }
+
+        function renderMatches() {
+            const query = input.value.trim().toLocaleLowerCase('tr-TR');
+            const matches = (lastCarPrices || []).filter(p => p.countryNameTr.toLocaleLowerCase('tr-TR').includes(query));
+
+            dropdown.innerHTML = '';
+            if (matches.length === 0) { closeDropdown(); return; }
+
+            matches.forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'role-dropdown-item';
+                item.innerHTML = `<span>${countryFlags[p.countryCode] || ''} ${p.countryNameTr}</span>`;
+                item.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    input.value = p.countryNameTr;
+                    currentCarCountrySearch = p.countryNameTr.toLocaleLowerCase('tr-TR');
+                    closeDropdown();
+                    renderCarPrices(lastCarPrices);
+                });
+                dropdown.appendChild(item);
+            });
+
+            dropdown.classList.add('open');
+        }
+
+        input.addEventListener('focus', () => {
+            input.value = '';
+            renderMatches();
+        });
+
+        input.addEventListener('input', () => {
+            currentCarCountrySearch = input.value.trim().toLocaleLowerCase('tr-TR');
+            renderCarPrices(lastCarPrices);
+            renderMatches();
+        });
+
+        input.addEventListener('blur', () => setTimeout(closeDropdown, 150));
+        input.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDropdown(); });
     }
 
     function exitCarMode() {
@@ -1572,8 +1678,11 @@
             document.getElementById('carModeWrap').style.display = '';
             document.getElementById('carModeBtn').style.display = 'none';
             document.getElementById('carBackToMenuBtn').style.display = '';
-            if (allCarModels.length === 0) await loadCarModels();
-            renderCarModelToggle();
+            if (allCarModels.length === 0) {
+                await loadCarModels();
+                document.getElementById('carModelSelectInput').value = currentCarModel;
+                setupCarModelAutocomplete();
+            }
             await loadCarPrices();
         });
 
@@ -1941,6 +2050,7 @@
         setupShareButton();
         setupCityChipDelegation();
         setupCountrySearch();
+        setupCarCountrySearch();
         setupQuizModeToggle();
         setupCarModeToggle();
         await loadCountries();
