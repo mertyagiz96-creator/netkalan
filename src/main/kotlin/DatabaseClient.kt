@@ -92,6 +92,7 @@ object DatabaseClient {
     private val householdSettings = linkedMapOf(
         "single" to HouseholdAdjustment("Bekar", taxWedgeDelta = 0.0, expenseMultiplier = 1.0, rentMultiplier = 1.0),
         "married_no_kids" to HouseholdAdjustment("Evli, Çocuksuz", taxWedgeDelta = -3.0, expenseMultiplier = 1.5, rentMultiplier = 1.3),
+        "married_1kid" to HouseholdAdjustment("Evli, 1 Çocuklu", taxWedgeDelta = -5.5, expenseMultiplier = 1.8, rentMultiplier = 1.45),
         "married_2kids" to HouseholdAdjustment("Evli, 2 Çocuklu", taxWedgeDelta = -8.0, expenseMultiplier = 2.1, rentMultiplier = 1.6)
     )
 

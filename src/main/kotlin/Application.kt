@@ -11,50 +11,71 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 // 🌍 Şu an desteklenen tüm ülke kodları — World Bank verisi bunlar için çekiliyor.
 private val SUPPORTED_COUNTRY_CODES = listOf("US", "DE", "GB", "NL", "TR", "IN", "BR", "CA", "PL", "AU", "CH", "FR", "JP")
 
-// 🔄 Sunucu açık kaldığı sürece AYDA BİR şunları tekrar çalıştırıyor:
-// 1) World Bank'ten işsizlik/enflasyonu tazeliyor (bu veri sık güncellenir)
-// 2) Stack Overflow'un anket dosyasını kontrol ediyor — 30 günden eskiyse yeniden
-//    indirip medyanları tekrar hesaplıyor. NOT: SO anketi kendisi YILDA BİR
-//    yayınlanıyor, yani çoğu ay bu adım "değişiklik yok" bulacak — ama otomasyon
-//    gerçek, yeni bir anket çıktığında elle bir şey yapmamıza gerek kalmayacak.
-// Hiçbiri sunucu başlangıcını BLOKLAMIYOR, arka planda çalışıyor.
+// 🔄 Üç veri kaynağı (World Bank, Stack Overflow, WhereNext) artık BİRBİRİNDEN
+// BAĞIMSIZ 3 AYRI döngüde çalışıyor — biri ağ seviyesinde takılıp kalsa bile
+// (nadir ama görüldü) diğer ikisi etkilenmiyor. Her birine ayrıca bir ÜST ZAMAN
+// SINIRI (withTimeoutOrNull) koyduk: bu süreyi aşan bir adım otomatik olarak
+// iptal edilip bir sonraki 30 günlük turda tekrar denenir, sonsuza kadar
+// donmuyor. Hiçbiri sunucu başlangıcını bloklamıyor.
 @OptIn(DelicateCoroutinesApi::class)
 private fun startMonthlyDataRefreshLoop() {
+    // 1) World Bank — işsizlik + enflasyon
     GlobalScope.launch {
         while (true) {
-            println("🔄 Aylık veri yenileme döngüsü başladı...")
-
-            for (code in SUPPORTED_COUNTRY_CODES) {
-                val unemployment = WorldBankClient.fetchUnemploymentPercent(code)
-                val inflation = WorldBankClient.fetchInflationPercent(code)
-                DatabaseClient.macroDataCache[code] = DatabaseClient.MacroData(unemployment, inflation)
-                delay(400) // 🐢 art arda çok hızlı istek atıp hız sınırına takılmayalım diye küçük bir bekleme
+            val completed = withTimeoutOrNull(5 * 60 * 1000L) {
+                for (code in SUPPORTED_COUNTRY_CODES) {
+                    val unemployment = WorldBankClient.fetchUnemploymentPercent(code)
+                    val inflation = WorldBankClient.fetchInflationPercent(code)
+                    DatabaseClient.macroDataCache[code] = DatabaseClient.MacroData(unemployment, inflation)
+                    delay(400)
+                }
+                true
             }
-            println("✅ World Bank verisi güncellendi (${SUPPORTED_COUNTRY_CODES.size} ülke).")
-
-            val costOfLiving = WhereNextClient.fetchCostOfLiving()
-            if (costOfLiving.isNotEmpty()) {
-                DatabaseClient.costOfLivingCache.clear()
-                DatabaseClient.costOfLivingCache.putAll(costOfLiving)
-                println("✅ WhereNext kira/gider verisi güncellendi (${costOfLiving.size} ülke).")
+            if (completed == true) {
+                println("✅ World Bank verisi güncellendi (${SUPPORTED_COUNTRY_CODES.size} ülke).")
             } else {
-                println("⚠️ WhereNext verisi bu turda alınamadı, mevcut önbellek korunuyor.")
+                println("⏱️ World Bank turu 5 dakikayı aştı, iptal edildi — bir sonraki turda tekrar denenecek.")
             }
+            delay(30L * 24 * 60 * 60 * 1000)
+        }
+    }
 
-            val realSalaries = StackOverflowSalaryClient.computeRealSalaries()
-            if (realSalaries.isNotEmpty()) {
+    // 2) Stack Overflow — gerçek medyan maaşlar
+    GlobalScope.launch {
+        while (true) {
+            val realSalaries = withTimeoutOrNull(8 * 60 * 1000L) {
+                StackOverflowSalaryClient.computeRealSalaries()
+            }
+            if (!realSalaries.isNullOrEmpty()) {
                 DatabaseClient.realSalaryCache.clear()
                 DatabaseClient.realSalaryCache.putAll(realSalaries)
                 println("✅ Stack Overflow gerçek maaş verisi güncellendi (${realSalaries.size} ülke×rol kombinasyonu).")
             } else {
-                println("⚠️ Stack Overflow verisi bu turda alınamadı, mevcut önbellek korunuyor.")
+                println("⏱️ Stack Overflow verisi bu turda alınamadı (zaman aşımı ya da boş sonuç), mevcut önbellek korunuyor.")
             }
+            delay(30L * 24 * 60 * 60 * 1000)
+        }
+    }
 
-            delay(30L * 24 * 60 * 60 * 1000) // 30 gün bekle, tekrar başa dön
+    // 3) WhereNext — kira/gider
+    GlobalScope.launch {
+        while (true) {
+            val costOfLiving = withTimeoutOrNull(2 * 60 * 1000L) {
+                WhereNextClient.fetchCostOfLiving()
+            }
+            if (!costOfLiving.isNullOrEmpty()) {
+                DatabaseClient.costOfLivingCache.clear()
+                DatabaseClient.costOfLivingCache.putAll(costOfLiving)
+                println("✅ WhereNext kira/gider verisi güncellendi (${costOfLiving.size} ülke).")
+            } else {
+                println("⏱️ WhereNext verisi bu turda alınamadı, mevcut önbellek korunuyor.")
+            }
+            delay(30L * 24 * 60 * 60 * 1000)
         }
     }
 }
