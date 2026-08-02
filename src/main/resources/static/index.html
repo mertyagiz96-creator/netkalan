@@ -802,7 +802,11 @@
     </div>
 
     <div id="quizModeWrap" style="display:none;">
-        <div class="quiz-score-bar">Skor: <b id="quizScoreText">0/0</b></div>
+        <div class="quiz-score-bar">
+            Skor: <b id="quizScoreText">0/0</b>
+            &nbsp;·&nbsp;
+            <button id="quizBackToMenuBtn" class="header-share-btn" style="display:inline-flex;">🏠 Ana Menüye Dön</button>
+        </div>
         <div id="quizContainer"></div>
     </div>
 </div>
@@ -897,6 +901,13 @@
         });
     }
 
+    function exitQuizMode() {
+        quizModeActive = false;
+        document.getElementById('normalModeWrap').style.display = '';
+        document.getElementById('quizModeWrap').style.display = 'none';
+        document.getElementById('quizModeBtn').classList.remove('active');
+    }
+
     function setupQuizModeToggle() {
         document.getElementById('quizModeBtn').addEventListener('click', () => {
             quizModeActive = !quizModeActive;
@@ -905,6 +916,8 @@
             document.getElementById('quizModeBtn').classList.toggle('active', quizModeActive);
             if (quizModeActive) startQuizRound();
         });
+
+        document.getElementById('quizBackToMenuBtn').addEventListener('click', exitQuizMode);
     }
     const countryFlags = {
         'US': '🇺🇸', 'DE': '🇩🇪', 'GB': '🇬🇧', 'NL': '🇳🇱', 'TR': '🇹🇷',
