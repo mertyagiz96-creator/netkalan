@@ -395,6 +395,85 @@
             display: block;
         }
 
+        /* 💰 Birikim kartları — okunabilirlik için renkli, büyük punto kutucuklar */
+        .savings-intro {
+            font-size: 0.9rem;
+            margin-bottom: 14px;
+            color: rgba(var(--fg-rgb), 0.85);
+        }
+
+        .savings-cards-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        @media (max-width: 650px) {
+            .savings-cards-grid { grid-template-columns: 1fr; }
+        }
+
+        .savings-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 8px;
+            background: rgba(var(--fg-rgb), 0.03);
+            border-left: 4px solid var(--light-green);
+        }
+
+        .savings-card.cash-card { border-left-color: rgba(var(--fg-rgb), 0.35); }
+        .savings-card.blend-card { border-left-color: var(--accent-gold); }
+
+        .savings-card-icon { font-size: 1.6rem; flex-shrink: 0; }
+
+        .savings-card-label {
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: rgba(var(--fg-rgb), 0.5);
+            margin-bottom: 2px;
+        }
+
+        .savings-card-value {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: rgb(var(--fg-rgb));
+        }
+
+        /* 🏆 1 milyon dolar rozeti — dikkat çeken özel kutu */
+        .million-badge {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin: 14px 0;
+            padding: 16px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, rgba(var(--accent-gold-rgb), 0.18) 0%, rgba(var(--accent-gold-rgb), 0.05) 100%);
+            border: 2px solid rgba(var(--accent-gold-rgb), 0.5);
+        }
+
+        .million-badge-icon { font-size: 2.2rem; }
+        .million-badge-text { font-size: 0.95rem; line-height: 1.4; }
+        .million-badge-text b { color: var(--accent-gold); font-size: 1.05rem; }
+
+        /* 🏠 Ev hedefi kartı */
+        .home-goal-card {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin: 10px 0 14px 0;
+            padding: 14px 16px;
+            border-radius: 10px;
+            background: rgba(var(--light-green-rgb), 0.08);
+            border: 1px solid rgba(var(--light-green-rgb), 0.35);
+        }
+
+        .home-goal-icon { font-size: 2rem; }
+        .home-goal-text { font-size: 0.9rem; line-height: 1.4; }
+        .home-goal-text b { color: var(--light-green); }
+
         .net-remaining {
             font-size: 1.7rem;
             font-weight: 800;
@@ -490,7 +569,7 @@
         }
 
         .quiz-option-btn {
-            padding: 24px 16px;
+            padding: 28px 16px;
             border-radius: 8px;
             border: 2px solid rgba(var(--light-green-rgb), 0.3);
             background: rgba(var(--fg-rgb), 0.02);
@@ -501,14 +580,17 @@
             transition: all 0.2s ease;
         }
 
+        .quiz-flag-huge { font-size: 3.2rem; display: block; margin-bottom: 10px; }
+
         .quiz-option-btn:hover:not(:disabled) {
             border-color: var(--accent-gold);
             background: rgba(var(--accent-gold-rgb), 0.08);
+            transform: translateY(-2px);
         }
 
-        .quiz-option-btn:disabled { cursor: default; opacity: 0.7; }
+        .quiz-option-btn:disabled { cursor: default; opacity: 0.85; }
         .quiz-option-btn.correct-answer { border-color: var(--light-green); background: rgba(var(--light-green-rgb), 0.15); }
-        .quiz-option-btn.wrong-answer { border-color: rgb(var(--bad-rgb)); }
+        .quiz-option-btn.wrong-answer { border-color: rgb(var(--bad-rgb)); opacity: 0.6; }
 
         .quiz-role-tag {
             display: block;
@@ -521,14 +603,48 @@
         .quiz-result-box {
             text-align: center;
             margin-top: 20px;
-            padding: 16px;
+            padding: 20px;
+        }
+
+        .quiz-result-icon { font-size: 3rem; margin-bottom: 6px; }
+
+        .quiz-result-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 16px;
         }
 
         .quiz-result-values {
-            font-size: 0.85rem;
-            color: rgba(var(--fg-rgb), 0.7);
-            margin: 10px 0;
-            line-height: 1.8;
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+            margin: 10px 0 20px 0;
+        }
+
+        @media (max-width: 650px) {
+            .quiz-result-values { flex-direction: column; align-items: center; gap: 14px; }
+        }
+
+        .quiz-result-item {
+            background: rgba(var(--fg-rgb), 0.03);
+            border-radius: 10px;
+            padding: 14px 22px;
+            min-width: 200px;
+        }
+
+        .quiz-result-item.winner { border: 2px solid var(--accent-gold); }
+
+        .quiz-result-item-label {
+            font-size: 0.8rem;
+            color: rgba(var(--fg-rgb), 0.55);
+            margin-bottom: 6px;
+        }
+
+        .quiz-result-item-value {
+            font-size: 1.9rem;
+            font-weight: 800;
+            color: var(--light-green);
         }
         .life-score-grid {
             display: grid;
@@ -727,11 +843,13 @@
             <div class="quiz-question">🤔 Hangisinin aylık net kalan tutarı daha yüksek?</div>
             <div class="quiz-options">
                 <button class="quiz-option-btn" data-side="A">
-                    ${countryFlags[entryA.countryCode] || ''} ${entryA.countryNameTr}
+                    <span class="quiz-flag-huge">${countryFlags[entryA.countryCode] || '🌍'}</span>
+                    ${entryA.countryNameTr}
                     <span class="quiz-role-tag">${roleA}</span>
                 </button>
                 <button class="quiz-option-btn" data-side="B">
-                    ${countryFlags[entryB.countryCode] || ''} ${entryB.countryNameTr}
+                    <span class="quiz-flag-huge">${countryFlags[entryB.countryCode] || '🌍'}</span>
+                    ${entryB.countryNameTr}
                     <span class="quiz-role-tag">${roleB}</span>
                 </button>
             </div>
@@ -759,10 +877,17 @@
 
                 document.getElementById('quizResultBox').innerHTML = `
                     <div class="quiz-result-box">
-                        <div style="font-size:1.3rem;font-weight:800;">${correct ? '✅ Doğru!' : '❌ Yanlış!'}</div>
+                        <div class="quiz-result-icon">${correct ? '🎉' : '😅'}</div>
+                        <div class="quiz-result-title">${correct ? 'Doğru!' : 'Yanlış!'}</div>
                         <div class="quiz-result-values">
-                            ${entryA.countryNameTr} (${roleA}): <b>${formatUsd(entryA.monthlyNetRemainingUsd)}</b>/ay<br>
-                            ${entryB.countryNameTr} (${roleB}): <b>${formatUsd(entryB.monthlyNetRemainingUsd)}</b>/ay
+                            <div class="quiz-result-item ${entryA.monthlyNetRemainingUsd >= entryB.monthlyNetRemainingUsd ? 'winner' : ''}">
+                                <div class="quiz-result-item-label">${countryFlags[entryA.countryCode] || ''} ${entryA.countryNameTr} — ${roleA}</div>
+                                <div class="quiz-result-item-value">${formatUsd(entryA.monthlyNetRemainingUsd)}<span style="font-size:0.9rem;color:rgba(var(--fg-rgb),0.5);">/ay</span></div>
+                            </div>
+                            <div class="quiz-result-item ${entryB.monthlyNetRemainingUsd > entryA.monthlyNetRemainingUsd ? 'winner' : ''}">
+                                <div class="quiz-result-item-label">${countryFlags[entryB.countryCode] || ''} ${entryB.countryNameTr} — ${roleB}</div>
+                                <div class="quiz-result-item-value">${formatUsd(entryB.monthlyNetRemainingUsd)}<span style="font-size:0.9rem;color:rgba(var(--fg-rgb),0.5);">/ay</span></div>
+                            </div>
                         </div>
                         <button id="quizNextBtn" class="compare-toggle-btn active">Sıradaki Soru →</button>
                     </div>
@@ -878,24 +1003,79 @@
         const tenYearBlend = futureValueOfMonthlyDeposit(monthly, BLEND_ANNUAL_RATE, 120);
 
         const monthsToMillion = monthsToReachTarget(monthly, BLEND_ANNUAL_RATE, 1000000);
-        const millionText = monthsToMillion
-            ? `Bu tempoyla (%50 nakit / %50 hisse karma portföyle) <b>1 milyon dolara ulaşman yaklaşık ${formatYearsMonths(monthsToMillion)}</b> sürer.`
-            : `1 milyon dolar hedefi bu tempoyla çok uzun sürer, hesaplanamayacak kadar uzak.`;
+        const millionHtml = monthsToMillion
+            ? `
+                <div class="million-badge">
+                    <div class="million-badge-icon">🏆</div>
+                    <div class="million-badge-text">
+                        Bu tempoyla (%50 nakit / %50 hisse karma portföy) <b>1.000.000 $'a ulaşman
+                        yaklaşık ${formatYearsMonths(monthsToMillion)}</b> sürer.
+                    </div>
+                </div>
+            `
+            : `
+                <div class="million-badge" style="border-color: rgba(var(--bad-rgb),0.4); background: rgba(var(--bad-rgb),0.06);">
+                    <div class="million-badge-icon">⏳</div>
+                    <div class="million-badge-text">1 milyon dolar hedefi bu tempoyla çok uzun sürer, hesaplanamayacak kadar uzak.</div>
+                </div>
+            `;
 
         const cityRentMonthly = d.rent;
         const estimatedHomePrice = cityRentMonthly * 12 * HOME_PRICE_TO_ANNUAL_RENT_RATIO;
         const monthsToHome = monthsToReachTarget(monthly, BLEND_ANNUAL_RATE, estimatedHomePrice);
-        const homeText = monthsToHome
-            ? `Seçili şehirdeki ortalama bir ev fiyatını (kabaca <b>${formatUsd(estimatedHomePrice)}</b>, kiranın ~18 katı varsayımıyla TAHMİNİ) biriktirmen yaklaşık <b>${formatYearsMonths(monthsToHome)}</b> sürer.`
-            : `Seçili şehirdeki ortalama ev fiyatına bu tempoyla ulaşmak çok uzun sürer.`;
+        const homeHtml = monthsToHome
+            ? `
+                <div class="home-goal-card">
+                    <div class="home-goal-icon">🏠</div>
+                    <div class="home-goal-text">
+                        Seçili şehirdeki ortalama ev fiyatını (kabaca <b>${formatUsd(estimatedHomePrice)}</b>,
+                        kiranın ~18 katı varsayımıyla TAHMİNİ) biriktirmen yaklaşık
+                        <b>${formatYearsMonths(monthsToHome)}</b> sürer.
+                    </div>
+                </div>
+            `
+            : `
+                <div class="home-goal-card">
+                    <div class="home-goal-icon">🏠</div>
+                    <div class="home-goal-text">Seçili şehirdeki ortalama ev fiyatına bu tempoyla ulaşmak çok uzun sürer.</div>
+                </div>
+            `;
 
         return `
             <div class="savings-panel">
-                Aylık <b>${formatUsd(monthly)}</b> biriktirebildiğini varsayarsak:
-                <br>• Sadece nakit faiziyle (~%4.5/yıl) <b>5 yılda ${formatUsd(fiveYearCash)}</b>, <b>10 yılda ${formatUsd(tenYearCash)}</b> birikir.
-                <br>• %50 nakit / %50 hisse senedi karma portföyle (~%${(BLEND_ANNUAL_RATE*100).toFixed(1)}/yıl ortalama) <b>5 yılda ${formatUsd(fiveYearBlend)}</b>, <b>10 yılda ${formatUsd(tenYearBlend)}</b> birikir.
-                <br>• ${millionText}
-                <br>• ${homeText}
+                <div class="savings-intro">Aylık <b>${formatUsd(monthly)}</b> biriktirebildiğini varsayarsak:</div>
+                <div class="savings-cards-grid">
+                    <div class="savings-card cash-card">
+                        <div class="savings-card-icon">💵</div>
+                        <div>
+                            <div class="savings-card-label">5 yıl · sadece nakit faizi (~%4.5)</div>
+                            <div class="savings-card-value">${formatUsd(fiveYearCash)}</div>
+                        </div>
+                    </div>
+                    <div class="savings-card blend-card">
+                        <div class="savings-card-icon">📈</div>
+                        <div>
+                            <div class="savings-card-label">5 yıl · %50 nakit / %50 hisse</div>
+                            <div class="savings-card-value">${formatUsd(fiveYearBlend)}</div>
+                        </div>
+                    </div>
+                    <div class="savings-card cash-card">
+                        <div class="savings-card-icon">💵</div>
+                        <div>
+                            <div class="savings-card-label">10 yıl · sadece nakit faizi</div>
+                            <div class="savings-card-value">${formatUsd(tenYearCash)}</div>
+                        </div>
+                    </div>
+                    <div class="savings-card blend-card">
+                        <div class="savings-card-icon">📈</div>
+                        <div>
+                            <div class="savings-card-label">10 yıl · %50 nakit / %50 hisse</div>
+                            <div class="savings-card-value">${formatUsd(tenYearBlend)}</div>
+                        </div>
+                    </div>
+                </div>
+                ${millionHtml}
+                ${homeHtml}
                 <span class="savings-note">
                     ⚠️ Bu bir yapay zeka analizi değil, sabit varsayımlara (yıllık %4.5 nakit faizi, %8 hisse senedi
                     getirisi — geçmiş performans, garanti değil) dayanan matematiksel bir projeksiyondur. Ev fiyatı
