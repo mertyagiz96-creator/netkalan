@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
 // 🌍 Şu an desteklenen tüm ülke kodları — World Bank verisi bunlar için çekiliyor.
-private val SUPPORTED_COUNTRY_CODES = listOf("US", "DE", "GB", "NL", "TR", "IN", "BR", "CA", "PL", "AU", "CH", "FR", "JP", "AE", "CN", "RU")
+private val SUPPORTED_COUNTRY_CODES = listOf("US", "DE", "GB", "NL", "TR", "IN", "BR", "CA", "PL", "AU", "CH", "FR", "JP", "AE", "CN", "RU", "DK")
 
 // 🔄 Üç veri kaynağı (World Bank, Stack Overflow, WhereNext) artık BİRBİRİNDEN
 // BAĞIMSIZ 3 AYRI döngüde çalışıyor — biri ağ seviyesinde takılıp kalsa bile
@@ -113,6 +113,18 @@ fun main() {
             // gösteren tanı endpoint'i — "hangi maaş yok" sorusuna cevap için.
             get("/api/data-coverage") {
                 call.respond(DatabaseClient.fetchDataCoverage())
+            }
+
+            // 🏆 Tahmin modu GLOBAL liderlik tablosu — herkes aynı rekoru görüyor.
+            get("/api/quiz-leaderboard") {
+                val record = DatabaseClient.fetchTopQuizRecord()
+                call.respond(record ?: DatabaseClient.QuizRecord("—", 0, ""))
+            }
+
+            post("/api/quiz-leaderboard") {
+                val submission = call.receive<DatabaseClient.QuizRecordSubmission>()
+                val updated = DatabaseClient.submitQuizRecordIfBeatsCurrent(submission.playerName, submission.streak)
+                call.respond(updated)
             }
 
             // 🚗 Araç fiyatı karşılaştırma modülü — model listesi ve seçilen modelin

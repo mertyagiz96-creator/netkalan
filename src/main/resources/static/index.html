@@ -867,54 +867,66 @@
             <div class="settings-panel-wrap" id="settingsMenuWrap">
                 <button id="settingsMenuBtn" class="icon-btn" title="Ayarlar">⚙️</button>
                 <div id="settingsMenuPanel" class="settings-panel">
-                    <button id="shareBtn" class="settings-panel-item">🔗 Paylaş</button>
+                    <button id="shareBtn" class="settings-panel-item" data-i18n="shareBtn">🔗 Paylaş</button>
+                    <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:1px; color:rgba(var(--fg-rgb),0.45); margin: 8px 0 4px 4px;">🌐 Language / Dil</div>
+                    <button id="langTrBtn" class="settings-panel-item">🇹🇷 Türkçe</button>
+                    <button id="langEnBtn" class="settings-panel-item">🇬🇧 English</button>
                 </div>
             </div>
         </div>
         <div style="display:flex; gap:8px; flex-wrap: wrap; justify-content: flex-end;">
-            <button id="quizModeBtn" class="header-share-btn">🎲 Tahmin Modu</button>
-            <button id="carModeBtn" class="header-share-btn">🚗 Araç Fiyatları</button>
-            <button id="quizBackToMenuBtn" class="header-share-btn" style="display:none;">🏠 Ana Menü</button>
-            <button id="carBackToMenuBtn" class="header-share-btn" style="display:none;">🏠 Ana Menü</button>
+            <button id="quizModeBtn" class="header-share-btn" data-i18n="quizModeBtn">🎲 Tahmin Modu</button>
+            <button id="carModeBtn" class="header-share-btn" data-i18n="carModeBtn">🚗 Araç Fiyatları</button>
+            <button id="recommendModeBtn" class="header-share-btn">🧭 Bana Ülke Öner</button>
+            <button id="quizBackToMenuBtn" class="header-share-btn" style="display:none;" data-i18n="backToMenu">🏠 Ana Menü</button>
+            <button id="carBackToMenuBtn" class="header-share-btn" style="display:none;" data-i18n="backToMenu">🏠 Ana Menü</button>
+            <button id="recommendBackToMenuBtn" class="header-share-btn" style="display:none;">🏠 Ana Menü</button>
         </div>
     </div>
 </header>
 
 <div class="container">
-    <p class="subtitle">Aynı meslek, farklı ülkeler — kirayı ve gideri çıkarınca elinde ne kalıyor?</p>
+    <p class="subtitle" data-i18n="subtitle">Aynı meslek, farklı ülkeler — kirayı ve gideri çıkarınca elinde ne kalıyor?</p>
     <div id="normalModeWrap">
         <div class="role-select-wrap" id="roleSelectWrap">
-            <span class="role-select-label">Meslek Seç</span>
-            <input id="roleSelectInput" class="role-select-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" name="netkalan-role-search" placeholder="Meslek yazın veya listeden seçin..." value="Backend Developer">
+            <span class="role-select-label" data-i18n="roleSelectLabel">Meslek Seç</span>
+            <input id="roleSelectInput" class="role-select-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" name="netkalan-role-search" data-i18n-placeholder="roleSelectPlaceholder" placeholder="Meslek yazın veya listeden seçin..." value="Backend Developer">
             <div id="roleDropdown" class="role-dropdown"></div>
         </div>
 
         <div class="sort-toggle-row" style="position: relative;">
             <div class="settings-panel-wrap" id="filtersMenuWrap">
-                <button id="filtersMenuBtn" class="sort-toggle-btn">🔧 Filtreler & Sıralama</button>
+                <button id="filtersMenuBtn" class="sort-toggle-btn" data-i18n="filtersBtn">🔧 Filtreler & Sıralama</button>
                 <div id="filtersMenuPanel" class="settings-panel" style="left: 50%; transform: translateX(-50%); min-width: 280px;">
-                    <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:1px; color:rgba(var(--fg-rgb),0.45); margin: 4px 0 6px 4px;">Sıralama (Net Kalan)</div>
+                    <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:1px; color:rgba(var(--fg-rgb),0.45); margin: 4px 0 6px 4px;" data-i18n="sortLabel">Sıralama (Net Kalan)</div>
                     <div id="sortToggleRowInPanel" style="display:flex; flex-direction:column; gap:4px; margin-bottom: 10px;">
-                        <button class="household-btn active" data-dir="desc">🔽 Çoktan Aza</button>
-                        <button class="household-btn" data-dir="asc">🔼 Azdan Çoğa</button>
+                        <button class="household-btn active" data-dir="desc" data-i18n="sortDesc">🔽 Çoktan Aza</button>
+                        <button class="household-btn" data-dir="asc" data-i18n="sortAsc">🔼 Azdan Çoğa</button>
                     </div>
-                    <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:1px; color:rgba(var(--fg-rgb),0.45); margin: 4px 0 6px 4px;">Medeni Durum</div>
+                    <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:1px; color:rgba(var(--fg-rgb),0.45); margin: 4px 0 6px 4px;" data-i18n="maritalLabel">Medeni Durum</div>
                     <div id="householdRow" style="display:flex; flex-direction:column; gap:4px; margin-bottom: 10px;"></div>
-                    <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:1px; color:rgba(var(--fg-rgb),0.45); margin: 4px 0 6px 4px;">Deneyim</div>
+                    <div id="spouseRoleSection" style="display:none; margin-bottom: 10px;">
+                        <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:1px; color:rgba(var(--fg-rgb),0.45); margin: 4px 0 6px 4px;" data-i18n="spouseRoleLabel">Eşin Mesleği (opsiyonel — seçilirse toplam hane geliri hesaplanır)</div>
+                        <div class="role-select-wrap" id="spouseRoleSelectWrap" style="max-width:none; margin-bottom:0;">
+                            <input id="spouseRoleSelectInput" class="role-select-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-i18n-placeholder="spouseRolePlaceholder" placeholder="Eşin mesleğini seçmek için tıkla...">
+                            <div id="spouseRoleDropdown" class="role-dropdown"></div>
+                        </div>
+                    </div>
+                    <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:1px; color:rgba(var(--fg-rgb),0.45); margin: 4px 0 6px 4px;" data-i18n="experienceLabel">Deneyim</div>
                     <div id="experienceRow" style="display:flex; flex-direction:column; gap:4px;"></div>
                 </div>
             </div>
         </div>
 
         <div class="country-search-wrap">
-            <input id="countrySearchInput" class="country-search-input" type="text" autocomplete="off" placeholder="🔍 Ülke ara ya da listeden seç...">
+            <input id="countrySearchInput" class="country-search-input" type="text" autocomplete="off" data-i18n-placeholder="searchPlaceholder" placeholder="🔍 Ülke ara ya da listeden seç...">
             <div id="countrySearchDropdown" class="role-dropdown"></div>
         </div>
 
         <div class="controls-row" id="compareControlRow"></div>
 
         <div id="countryList" class="country-list">
-            <div class="loading-state">Veriler yükleniyor...</div>
+            <div class="loading-state" data-i18n="loading">Veriler yükleniyor...</div>
         </div>
 
         <div class="disclaimer">
@@ -932,7 +944,10 @@
     </div>
 
     <div id="quizModeWrap" style="display:none;">
-        <div class="quiz-score-bar">Skor: <b id="quizScoreText">0/0</b></div>
+        <div class="quiz-score-bar">
+            Skor: <b id="quizScoreText">0/0</b>
+            <div id="quizStreakText" style="margin-top:4px; font-size:0.8rem;">🔥 Serin: <b>0</b> &nbsp;·&nbsp; 🏆 Global Rekor: <b>0</b></div>
+        </div>
         <div id="quizContainer"></div>
     </div>
 
@@ -953,15 +968,338 @@
             13 ülkenin sadece bir kısmı gösteriliyor — güvenilir veri bulamadığımız ülkeler listede yer almıyor.
         </div>
     </div>
+
+    <div id="recommendModeWrap" style="display:none;">
+        <p class="subtitle">Senin için en önemlisi ne? Ona göre en uygun ülkeyi bulalım (mesleğin: <b id="recommendRoleLabel"></b>)</p>
+        <div class="quiz-options" style="max-width:700px; margin: 0 auto 24px auto;">
+            <button class="quiz-option-btn" data-priority="net">
+                💰
+                <span class="quiz-role-tag">En Yüksek Net Kalan</span>
+            </button>
+            <button class="quiz-option-btn" data-priority="tax">
+                🧾
+                <span class="quiz-role-tag">En Düşük Vergi</span>
+            </button>
+            <button class="quiz-option-btn" data-priority="cost">
+                🏠
+                <span class="quiz-role-tag">En Düşük Yaşam Maliyeti</span>
+            </button>
+            <button class="quiz-option-btn" data-priority="jobs">
+                💼
+                <span class="quiz-role-tag">En Düşük İşsizlik (İş Güvenliği)</span>
+            </button>
+        </div>
+        <div id="recommendResults"></div>
+    </div>
 </div>
 
 <script>
-    const QUIZ_COUNTRY_CODES = ['US','DE','GB','NL','TR','IN','BR','CA','PL','AU','CH','FR','JP','AE','CN','RU'];
+    // 🧭 "Bana Ülke Öner" sihirbazı — seçilen önceliğe göre mevcut ülke verisini
+    // (zaten yüklü/gerçek olan aynı veri) farklı sıralayıp en uygun 3 ülkeyi
+    // açıklamalı olarak gösteriyor. Yeni bir veri kaynağı gerekmiyor.
+    let recommendModeActive = false;
+
+    function exitRecommendMode() {
+        recommendModeActive = false;
+        document.getElementById('normalModeWrap').style.display = '';
+        document.getElementById('recommendModeWrap').style.display = 'none';
+        document.getElementById('recommendModeBtn').style.display = '';
+        document.getElementById('recommendBackToMenuBtn').style.display = 'none';
+    }
+
+    function setupRecommendMode() {
+        document.getElementById('recommendModeBtn').addEventListener('click', () => {
+            if (quizModeActive) exitQuizMode();
+            if (carModeActive) exitCarMode();
+            recommendModeActive = true;
+            document.getElementById('normalModeWrap').style.display = 'none';
+            document.getElementById('recommendModeWrap').style.display = '';
+            document.getElementById('recommendModeBtn').style.display = 'none';
+            document.getElementById('recommendBackToMenuBtn').style.display = '';
+            document.getElementById('recommendRoleLabel').textContent = currentRole;
+            document.getElementById('recommendResults').innerHTML = '';
+        });
+
+        document.getElementById('recommendBackToMenuBtn').addEventListener('click', exitRecommendMode);
+
+        document.querySelectorAll('#recommendModeWrap .quiz-option-btn').forEach(btn => {
+            btn.addEventListener('click', () => runRecommendation(btn.dataset.priority));
+        });
+    }
+
+    const RECOMMEND_META = {
+        net: { label: 'En Yüksek Net Kalan', icon: '💰', explain: c => `Aylık net kalan: <b>${formatUsd(c.monthlyNetRemainingUsd)}</b>` },
+        tax: { label: 'En Düşük Vergi', icon: '🧾', explain: c => `Vergi kaması: <b>%${c.taxWedgePercent.toFixed(1)}</b>` },
+        cost: { label: 'En Düşük Yaşam Maliyeti', icon: '🏠', explain: c => `Aylık kira+gider: <b>${formatUsd(c.monthlyRentUsd + c.monthlyExpenseUsd)}</b>` },
+        jobs: { label: 'En Düşük İşsizlik', icon: '💼', explain: c => `İşsizlik oranı: <b>%${c.unemploymentPercent.toFixed(1)}</b> (World Bank, gerçek)` }
+    };
+
+    async function runRecommendation(priority) {
+        const container = document.getElementById('recommendResults');
+        container.innerHTML = '<div class="loading-state">Analiz ediliyor...</div>';
+
+        try {
+            const res = await fetch(`/api/countries?role=${encodeURIComponent(currentRole)}&household=${encodeURIComponent(currentHousehold)}&experience=${encodeURIComponent(currentExperience)}`);
+            let countries = await res.json();
+
+            if (priority === 'jobs') {
+                countries = countries.filter(c => c.unemploymentPercent !== null && c.unemploymentPercent !== undefined);
+            }
+
+            let sorted;
+            if (priority === 'net') sorted = countries.sort((a, b) => b.monthlyNetRemainingUsd - a.monthlyNetRemainingUsd);
+            else if (priority === 'tax') sorted = countries.sort((a, b) => a.taxWedgePercent - b.taxWedgePercent);
+            else if (priority === 'cost') sorted = countries.sort((a, b) => (a.monthlyRentUsd + a.monthlyExpenseUsd) - (b.monthlyRentUsd + b.monthlyExpenseUsd));
+            else sorted = countries.sort((a, b) => a.unemploymentPercent - b.unemploymentPercent);
+
+            const top3 = sorted.slice(0, 3);
+            const meta = RECOMMEND_META[priority];
+
+            if (top3.length === 0) {
+                container.innerHTML = '<div class="loading-state">Bu kritere uygun yeterli veri bulunamadı.</div>';
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="savings-panel" style="max-width:800px; margin:0 auto;">
+                    <div class="savings-intro">${meta.icon} <b>${meta.label}</b> önceliğine göre önerilen ilk 3 ülke:</div>
+                    ${top3.map((c, idx) => `
+                        <div class="home-goal-card" style="${idx === 0 ? 'border-color: var(--accent-gold); background: rgba(var(--accent-gold-rgb),0.08);' : ''}">
+                            <div class="home-goal-icon">${idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}</div>
+                            <div class="home-goal-text">
+                                <b>${countryFlags[c.countryCode] || ''} ${c.countryNameTr}</b><br>
+                                ${meta.explain(c)}
+                            </div>
+                        </div>
+                    `).join('')}
+                    <span class="savings-note">Bu sıralama, zaten üstteki ekranda kullandığımız gerçek veriye dayanıyor — sadece önceliğine göre farklı sıralanmış hali.</span>
+                </div>
+            `;
+        } catch (e) {
+            container.innerHTML = '<div class="loading-state">❌ Analiz yapılamadı.</div>';
+        }
+    }
+    // Backend'den gelen veri (ülke isimleri, meslek isimleri, kaynak metinleri)
+    // hâlâ Türkçe — bu ayrı, daha büyük bir iş, şimdilik kapsam dışı.
+    let currentLang = localStorage.getItem('netkalan_lang') || 'tr';
+
+    const T = {
+        subtitle: { tr: 'Bir ülkeye taşınırsan cebinde ay sonunda ne kalır?', en: 'If you moved to a country, what would you have left each month?' },
+        searchPlaceholder: { tr: '🔍 Ülke ara ya da listeden seç...', en: '🔍 Search a country or pick from the list...' },
+        noSearchMatch: { tr: '🔍 Aramanla eşleşen ülke bulunamadı.', en: '🔍 No country matches your search.' },
+        sortLabel: { tr: 'Sıralama (Net Kalan)', en: 'Sort (Net Remaining)' },
+        sortDesc: { tr: '🔽 Çoktan Aza', en: '🔽 High to Low' },
+        sortAsc: { tr: '🔼 Azdan Çoğa', en: '🔼 Low to High' },
+        maritalLabel: { tr: 'Medeni Durum', en: 'Marital Status' },
+        spouseRoleLabel: { tr: 'Eşin Mesleği (opsiyonel — seçilirse toplam hane geliri hesaplanır)', en: "Spouse's Profession (optional — combines household income if selected)" },
+        spouseRolePlaceholder: { tr: 'Eşin mesleğini seçmek için tıkla...', en: "Click to select spouse's profession..." },
+        experienceLabel: { tr: 'Deneyim', en: 'Experience' },
+        filtersBtn: { tr: '🔧 Filtreler & Sıralama', en: '🔧 Filters & Sort' },
+        quizModeBtn: { tr: '🎲 Tahmin Modu', en: '🎲 Guess Game' },
+        carModeBtn: { tr: '🚗 Araç Fiyatları', en: '🚗 Car Prices' },
+        backToMenu: { tr: '🏠 Ana Menü', en: '🏠 Main Menu' },
+        shareBtn: { tr: '🔗 Paylaş', en: '🔗 Share' },
+        roleSelectLabel: { tr: 'Meslek Seç', en: 'Select Profession' },
+        roleSelectPlaceholder: { tr: 'Meslek yazın veya listeden seçin...', en: 'Type or select a profession...' },
+        loading: { tr: 'Veriler yükleniyor...', en: 'Loading data...' },
+        loadError: { tr: '❌ Veriler yüklenemedi.', en: '❌ Failed to load data.' },
+        heroLabel: { tr: 'Aylık Net Kalan', en: 'Monthly Net Remaining' },
+        pctOfGross: { tr: "brüt maaşın %{pct}'i", en: '{pct}% of gross salary' },
+        householdCombined: { tr: '👥 2 kişi için toplamdır ({role1} + {role2})', en: '👥 Combined total for 2 people ({role1} + {role2})' },
+        statGrossYear: { tr: 'Brüt / Yıl', en: 'Gross / Year' },
+        statTaxWedge: { tr: 'Vergi Kaması', en: 'Tax Wedge' },
+        statNetMonth: { tr: 'Net / Ay', en: 'Net / Month' },
+        statRentMonth: { tr: 'Kira / Ay', en: 'Rent / Month' },
+        statOtherExpense: { tr: 'Diğer Gider', en: 'Other Expenses' },
+        statInflation: { tr: 'Enflasyon 🌍', en: 'Inflation 🌍' },
+        savingsIntro: { tr: 'biriktirebildiğini varsayarsak:', en: 'assuming you can save this each month:' },
+        savingsCash5: { tr: '5 yıl · sadece nakit faizi (~%4.5)', en: '5 years · cash interest only (~4.5%)' },
+        savingsBlend5: { tr: '5 yıl · %50 nakit / %50 hisse', en: '5 years · 50% cash / 50% stocks' },
+        savingsCash10: { tr: '10 yıl · sadece nakit faizi', en: '10 years · cash interest only' },
+        savingsBlend10: { tr: '10 yıl · %50 nakit / %50 hisse', en: '10 years · 50% cash / 50% stocks' },
+        millionText: { tr: "Bu tempoyla (%50 nakit / %50 hisse karma portföy) <b>1.000.000 $'a ulaşman yaklaşık {time}</b> sürer.", en: 'At this pace (50% cash / 50% stocks), reaching <b>$1,000,000 would take about {time}</b>.' },
+        millionTooFar: { tr: '1 milyon dolar hedefi bu tempoyla çok uzun sürer, hesaplanamayacak kadar uzak.', en: 'At this pace, reaching $1,000,000 would take too long to calculate.' },
+        homeGoalText: { tr: "Seçili şehirdeki ortalama ev fiyatını (kabaca <b>{price}</b>, {source}) biriktirmen yaklaşık <b>{time}</b> sürer.", en: 'Saving up for an average home in the selected city (roughly <b>{price}</b>, {source}) would take about <b>{time}</b>.' },
+        homeGoalTooFar: { tr: 'Seçili şehirdeki ortalama ev fiyatına bu tempoyla ulaşmak çok uzun sürer.', en: 'At this pace, reaching the average home price here would take too long.' },
+        homeRealSource: { tr: 'gerçek piyasa verisi', en: 'real market data' },
+        carGoalText: { tr: "Standart bir <b>Audi A3</b>'ü (bu ülkede yaklaşık <b>{price}</b>) biriktirmen yaklaşık <b>{time}</b> sürer.", en: 'Saving up for a standard <b>Audi A3</b> (roughly <b>{price}</b> in this country) would take about <b>{time}</b>.' },
+        savingsNote: { tr: '⚠️ Bu bir yapay zeka analizi değil, sabit varsayımlara dayanan matematiksel bir projeksiyondur.', en: '⚠️ This is not an AI analysis — it is a mathematical projection based on fixed assumptions (not guaranteed returns).' },
+        savingsZero: { tr: 'Bu koşullarda aylık net kalan tutar negatif ya da sıfır — birikim projeksiyonu anlamlı olmuyor. Farklı bir şehir ya da hane tipi dener misin?', en: 'Under these conditions, the monthly net remaining is zero or negative — a savings projection would not be meaningful. Try a different city or household type.' },
+        yearUnit: { tr: 'yıl', en: 'yr' },
+        monthUnit: { tr: 'ay', en: 'mo' },
+        millionBadgeTitle: { tr: '🏆', en: '🏆' },
+        disclaimerTitle: { tr: '⚠️ Veri notu:', en: '⚠️ Data note:' }
+    };
+
+    function t(key, vars) {
+        const entry = T[key];
+        if (!entry) return key;
+        let text = entry[currentLang] || entry.tr;
+        if (vars) {
+            Object.keys(vars).forEach(k => { text = text.replace(`{${k}}`, vars[k]); });
+        }
+        return text;
+    }
+
+    function applyStaticTranslations() {
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            el.textContent = t(key);
+        });
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+            const key = el.getAttribute('data-i18n-placeholder');
+            el.placeholder = t(key);
+        });
+        document.documentElement.lang = currentLang;
+    }
+
+    function setLanguage(lang) {
+        currentLang = lang;
+        localStorage.setItem('netkalan_lang', lang);
+        applyStaticTranslations();
+        loadCountries();
+        closeFiltersMenu();
+    }
+
+    const QUIZ_COUNTRY_CODES = ['US','DE','GB','NL','TR','IN','BR','CA','PL','AU','CH','FR','JP','AE','CN','RU','DK'];
     let quizScore = 0, quizTotalAttempts = 0, quizModeActive = false;
+    let currentStreak = 0;
+    let globalRecord = { playerName: '—', streak: 0 };
+
+    async function loadGlobalRecord() {
+        try {
+            const res = await fetch('/api/quiz-leaderboard');
+            globalRecord = await res.json();
+            updateStreakDisplay();
+        } catch (e) { /* sessizce geç, kritik değil */ }
+    }
+
+    function updateStreakDisplay() {
+        const el = document.getElementById('quizStreakText');
+        if (el) {
+            el.innerHTML = `🔥 Serin: <b>${currentStreak}</b> &nbsp;·&nbsp; 🏆 Global Rekor: <b>${globalRecord.streak}</b>${globalRecord.playerName && globalRecord.playerName !== '—' ? ` (${globalRecord.playerName})` : ''}`;
+        }
+    }
+
+    async function submitStreakIfRecord() {
+        if (currentStreak <= globalRecord.streak) return;
+        const name = prompt(`🎉 Yeni GLOBAL rekor! (${currentStreak} doğru üst üste)\nHerkesin göreceği rekor tablosunda görünmek için bir isim/rumuz yaz:`, '');
+        if (name === null) return; // vazgeçti, kayıt etme
+        try {
+            const res = await fetch('/api/quiz-leaderboard', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ playerName: name || 'Anonim', streak: currentStreak })
+            });
+            globalRecord = await res.json();
+            updateStreakDisplay();
+        } catch (e) { /* sessizce geç */ }
+    }
 
     function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
     async function startQuizRound() {
+        // 🎲 %50 maaş sorusu, %50 araç fiyatı sorusu — çeşitlilik için.
+        if (Math.random() < 0.5) {
+            return startCarQuizRound();
+        }
+        return startSalaryQuizRound();
+    }
+
+    async function startCarQuizRound() {
+        const container = document.getElementById('quizContainer');
+        container.innerHTML = '<div class="loading-state">Soru hazırlanıyor...</div>';
+        try {
+            if (allCarModels.length === 0) await loadCarModels();
+            const modelA = pickRandom(allCarModels).name;
+            const modelB = pickRandom(allCarModels).name;
+
+            const [pricesA, pricesB] = await Promise.all([
+                fetch(`/api/car-prices?model=${encodeURIComponent(modelA)}`).then(r => r.json()),
+                fetch(`/api/car-prices?model=${encodeURIComponent(modelB)}`).then(r => r.json())
+            ]);
+            if (!pricesA.length || !pricesB.length) { return startCarQuizRound(); }
+
+            const entryA = pickRandom(pricesA);
+            let entryB = pickRandom(pricesB);
+            let attempts = 0;
+            while (entryA.countryCode === entryB.countryCode && modelA === modelB && attempts < 5) {
+                entryB = pickRandom(pricesB);
+                attempts++;
+            }
+
+            renderCarQuizRound(entryA, modelA, entryB, modelB);
+        } catch (e) {
+            container.innerHTML = `<div class="loading-state">⏱️ Soru yüklenemedi. <button id="quizRetryBtn" class="compare-toggle-btn active">🔄 Tekrar Dene</button></div>`;
+            document.getElementById('quizRetryBtn').addEventListener('click', startQuizRound);
+        }
+    }
+
+    function renderCarQuizRound(entryA, modelA, entryB, modelB) {
+        const container = document.getElementById('quizContainer');
+        container.innerHTML = `
+            <div class="quiz-question">🚗 Hangisi daha pahalı?</div>
+            <div class="quiz-options">
+                <button class="quiz-option-btn" data-side="A">
+                    <span class="quiz-flag-huge">${countryFlags[entryA.countryCode] || '🌍'}</span>
+                    ${entryA.countryNameTr}
+                    <span class="quiz-role-tag">${modelA}</span>
+                </button>
+                <button class="quiz-option-btn" data-side="B">
+                    <span class="quiz-flag-huge">${countryFlags[entryB.countryCode] || '🌍'}</span>
+                    ${entryB.countryNameTr}
+                    <span class="quiz-role-tag">${modelB}</span>
+                </button>
+            </div>
+            <div id="quizResultBox"></div>
+        `;
+
+        container.querySelectorAll('.quiz-option-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const chosenIsA = btn.dataset.side === 'A';
+                const chosen = chosenIsA ? entryA : entryB;
+                const other = chosenIsA ? entryB : entryA;
+                const correct = chosen.priceUsd >= other.priceUsd;
+
+                quizTotalAttempts++;
+                if (correct) quizScore++;
+                document.getElementById('quizScoreText').textContent = `${quizScore}/${quizTotalAttempts}`;
+
+                if (correct) { currentStreak++; } else { currentStreak = 0; }
+                updateStreakDisplay();
+                if (correct) submitStreakIfRecord();
+
+                container.querySelectorAll('.quiz-option-btn').forEach(b => {
+                    b.disabled = true;
+                    const bIsA = b.dataset.side === 'A';
+                    const bEntry = bIsA ? entryA : entryB;
+                    const isHigher = bEntry.priceUsd === Math.max(entryA.priceUsd, entryB.priceUsd);
+                    b.classList.add(isHigher ? 'correct-answer' : 'wrong-answer');
+                });
+
+                document.getElementById('quizResultBox').innerHTML = `
+                    <div class="quiz-result-box">
+                        <div class="quiz-result-icon">${correct ? '🎉' : '😅'}</div>
+                        <div class="quiz-result-title">${correct ? 'Doğru!' : 'Yanlış!'}</div>
+                        <div class="quiz-result-values">
+                            <div class="quiz-result-item ${entryA.priceUsd >= entryB.priceUsd ? 'winner' : ''}">
+                                <div class="quiz-result-item-label">${countryFlags[entryA.countryCode] || ''} ${entryA.countryNameTr} — ${modelA}</div>
+                                <div class="quiz-result-item-value">${formatUsd(entryA.priceUsd)}</div>
+                            </div>
+                            <div class="quiz-result-item ${entryB.priceUsd > entryA.priceUsd ? 'winner' : ''}">
+                                <div class="quiz-result-item-label">${countryFlags[entryB.countryCode] || ''} ${entryB.countryNameTr} — ${modelB}</div>
+                                <div class="quiz-result-item-value">${formatUsd(entryB.priceUsd)}</div>
+                            </div>
+                        </div>
+                        <button id="quizNextBtn" class="compare-toggle-btn active">Sıradaki Soru →</button>
+                    </div>
+                `;
+                document.getElementById('quizNextBtn').addEventListener('click', startQuizRound);
+            });
+        });
+    }
+
+    async function startSalaryQuizRound() {
         const container = document.getElementById('quizContainer');
         container.innerHTML = '<div class="loading-state">Soru hazırlanıyor... (sunucu uykudan uyanıyorsa 30-60 saniye sürebilir)</div>';
 
@@ -1032,6 +1370,10 @@
                 if (correct) quizScore++;
                 document.getElementById('quizScoreText').textContent = `${quizScore}/${quizTotalAttempts}`;
 
+                if (correct) { currentStreak++; } else { currentStreak = 0; }
+                updateStreakDisplay();
+                if (correct) submitStreakIfRecord();
+
                 container.querySelectorAll('.quiz-option-btn').forEach(b => {
                     b.disabled = true;
                     const bIsA = b.dataset.side === 'A';
@@ -1084,11 +1426,15 @@
     function setupQuizModeToggle() {
         document.getElementById('quizModeBtn').addEventListener('click', () => {
             if (carModeActive) exitCarMode();
+            if (recommendModeActive) exitRecommendMode();
             quizModeActive = true;
+            currentStreak = 0;
             document.getElementById('normalModeWrap').style.display = 'none';
             document.getElementById('quizModeWrap').style.display = '';
             document.getElementById('quizModeBtn').style.display = 'none';
             document.getElementById('quizBackToMenuBtn').style.display = '';
+            loadGlobalRecord();
+            updateStreakDisplay();
             startQuizRound();
         });
 
@@ -1097,7 +1443,7 @@
     const countryFlags = {
         'US': '🇺🇸', 'DE': '🇩🇪', 'GB': '🇬🇧', 'NL': '🇳🇱', 'TR': '🇹🇷',
         'IN': '🇮🇳', 'BR': '🇧🇷', 'CA': '🇨🇦', 'PL': '🇵🇱', 'AU': '🇦🇺',
-        'CH': '🇨🇭', 'FR': '🇫🇷', 'JP': '🇯🇵', 'AE': '🇦🇪', 'CN': '🇨🇳', 'RU': '🇷🇺'
+        'CH': '🇨🇭', 'FR': '🇫🇷', 'JP': '🇯🇵', 'AE': '🇦🇪', 'CN': '🇨🇳', 'RU': '🇷🇺', 'DK': '🇩🇰'
     };
 
     // ⭐ Life Score — SADECE elimizde gerçek veri olan iki kategori hesaplanıyor
@@ -1228,9 +1574,10 @@
         if (months === null || !isFinite(months)) return null;
         const years = Math.floor(months / 12);
         const rem = Math.round(months % 12);
-        if (years === 0) return `${rem} ay`;
-        if (rem === 0) return `${years} yıl`;
-        return `${years} yıl ${rem} ay`;
+        const y = t('yearUnit'), m = t('monthUnit');
+        if (years === 0) return `${rem} ${m}`;
+        if (rem === 0) return `${years} ${y}`;
+        return `${years} ${y} ${rem} ${m}`;
     }
 
     function buildSavingsPanelHtml(d, c) {
@@ -1239,10 +1586,8 @@
         if (monthly <= 0) {
             return `
                 <div class="savings-panel">
-                    Bu koşullarda (seçili şehir/hane tipiyle) aylık net kalan tutar <b>negatif ya da sıfır</b> —
-                    yani gelir, kira ve giderleri karşılamaya yetmiyor görünüyor. Birikim/yatırım projeksiyonu
-                    bu durumda anlamlı olmuyor. Farklı bir şehir ya da hane tipi seçerek tekrar dener misin?
-                    <span class="savings-note">Bu bölüm yapay zeka değil, matematiksel bir hesaplamadır (bkz. altta metodoloji).</span>
+                    ${t('savingsZero')}
+                    <span class="savings-note">${t('savingsNote')}</span>
                 </div>
             `;
         }
@@ -1257,16 +1602,13 @@
             ? `
                 <div class="million-badge">
                     <div class="million-badge-icon">🏆</div>
-                    <div class="million-badge-text">
-                        Bu tempoyla (%50 nakit / %50 hisse karma portföy) <b>1.000.000 $'a ulaşman
-                        yaklaşık ${formatYearsMonths(monthsToMillion)}</b> sürer.
-                    </div>
+                    <div class="million-badge-text">${t('millionText', {time: formatYearsMonths(monthsToMillion)})}</div>
                 </div>
             `
             : `
                 <div class="million-badge" style="border-color: rgba(var(--bad-rgb),0.4); background: rgba(var(--bad-rgb),0.06);">
                     <div class="million-badge-icon">⏳</div>
-                    <div class="million-badge-text">1 milyon dolar hedefi bu tempoyla çok uzun sürer, hesaplanamayacak kadar uzak.</div>
+                    <div class="million-badge-text">${t('millionTooFar')}</div>
                 </div>
             `;
 
@@ -1300,24 +1642,20 @@
         const isFlagshipCitySelected = Math.abs(citySaleScaleFactor - 1.0) < 0.001;
         const homeSourceNote = isRealHomeAnchor
             ? (isFlagshipCitySelected
-                ? `<span style="color:var(--light-green);font-size:0.7rem;font-weight:700;">✓ GERÇEK PİYASA VERİSİ</span>${homeSizeMultiplier > 1 ? ` (hane büyüklüğüne göre ${homeSizeMultiplier}x ölçeklendi)` : ''}`
-                : `flagship şehrin gerçek fiyatından, seçili şehrin göreceli pahalılığına göre ÖLÇEKLENMİŞ tahmin${homeSizeMultiplier > 1 ? ` (+ hane büyüklüğü ${homeSizeMultiplier}x)` : ''}`)
-            : `Global Property Guide'ın bu ülke için GERÇEK fiyat/kira oranı olan ~${priceToRentRatio} kat kullanılarak hesaplanmıştır`;
+                ? `<span style="color:var(--light-green);font-size:0.7rem;font-weight:700;">✓ ${t('homeRealSource')}</span>`
+                : t('homeRealSource'))
+            : `${currentLang === 'en' ? 'a real price-to-rent ratio of ~' + priceToRentRatio + 'x for this country' : `Global Property Guide'ın bu ülke için GERÇEK fiyat/kira oranı olan ~${priceToRentRatio} kat kullanılarak hesaplanmıştır`}`;
         const homeHtml = monthsToHome
             ? `
                 <div class="home-goal-card">
                     <div class="home-goal-icon">🏠</div>
-                    <div class="home-goal-text">
-                        Seçili şehirdeki ortalama ev fiyatını (kabaca <b>${formatUsd(estimatedHomePrice)}</b>,
-                        ${homeSourceNote}) biriktirmen yaklaşık
-                        <b>${formatYearsMonths(monthsToHome)}</b> sürer.
-                    </div>
+                    <div class="home-goal-text">${t('homeGoalText', {price: formatUsd(estimatedHomePrice), source: homeSourceNote, time: formatYearsMonths(monthsToHome)})}</div>
                 </div>
             `
             : `
                 <div class="home-goal-card">
                     <div class="home-goal-icon">🏠</div>
-                    <div class="home-goal-text">Seçili şehirdeki ortalama ev fiyatına bu tempoyla ulaşmak çok uzun sürer.</div>
+                    <div class="home-goal-text">${t('homeGoalTooFar')}</div>
                 </div>
             `;
 
@@ -1327,43 +1665,40 @@
             carHtml = `
                 <div class="home-goal-card" style="background: rgba(var(--accent-gold-rgb), 0.08); border-color: rgba(var(--accent-gold-rgb), 0.3);">
                     <div class="home-goal-icon">🚗</div>
-                    <div class="home-goal-text">
-                        Standart bir <b>Audi A3</b>'ü (bu ülkede yaklaşık <b>${formatUsd(c.audiA3PriceUsd)}</b>)
-                        biriktirmen yaklaşık <b>${formatYearsMonths(monthsToCar)}</b> sürer.
-                    </div>
+                    <div class="home-goal-text">${t('carGoalText', {price: formatUsd(c.audiA3PriceUsd), time: formatYearsMonths(monthsToCar)})}</div>
                 </div>
             `;
         }
 
         return `
             <div class="savings-panel">
-                <div class="savings-intro">Aylık <b>${formatUsd(monthly)}</b> biriktirebildiğini varsayarsak:</div>
+                <div class="savings-intro"><b>${formatUsd(monthly)}</b> ${t('savingsIntro')}</div>
                 <div class="savings-cards-grid">
                     <div class="savings-card cash-card">
                         <div class="savings-card-icon">💵</div>
                         <div>
-                            <div class="savings-card-label">5 yıl · sadece nakit faizi (~%4.5)</div>
+                            <div class="savings-card-label">${t('savingsCash5')}</div>
                             <div class="savings-card-value">${formatUsd(fiveYearCash)}</div>
                         </div>
                     </div>
                     <div class="savings-card blend-card">
                         <div class="savings-card-icon">📈</div>
                         <div>
-                            <div class="savings-card-label">5 yıl · %50 nakit / %50 hisse</div>
+                            <div class="savings-card-label">${t('savingsBlend5')}</div>
                             <div class="savings-card-value">${formatUsd(fiveYearBlend)}</div>
                         </div>
                     </div>
                     <div class="savings-card cash-card">
                         <div class="savings-card-icon">💵</div>
                         <div>
-                            <div class="savings-card-label">10 yıl · sadece nakit faizi</div>
+                            <div class="savings-card-label">${t('savingsCash10')}</div>
                             <div class="savings-card-value">${formatUsd(tenYearCash)}</div>
                         </div>
                     </div>
                     <div class="savings-card blend-card">
                         <div class="savings-card-icon">📈</div>
                         <div>
-                            <div class="savings-card-label">10 yıl · %50 nakit / %50 hisse</div>
+                            <div class="savings-card-label">${t('savingsBlend10')}</div>
                             <div class="savings-card-value">${formatUsd(tenYearBlend)}</div>
                         </div>
                     </div>
@@ -1371,14 +1706,7 @@
                 ${millionHtml}
                 ${homeHtml}
                 ${carHtml}
-                <span class="savings-note">
-                    ⚠️ Bu bir yapay zeka analizi değil, sabit varsayımlara (yıllık %4.5 nakit faizi, %8 hisse senedi
-                    getirisi — geçmiş performans, garanti değil) dayanan matematiksel bir projeksiyondur. Ev fiyatı
-                    artık 13 ülkenin hepsi için gerçek, isim verilmiş piyasa kaynaklarından araştırılmış giriş
-                    seviyesi/stüdyo daire fiyatlarına dayanıyor (Kanada hariç — onun için genel piyasa tahmini
-                    kullanıldı). Yine de bu, o ülkedeki HER ev için değil, "flagship şehirde giriş seviyesi bir
-                    daire" için bir referans noktasıdır.
-                </span>
+                <span class="savings-note">${t('savingsNote')}</span>
             </div>
         `;
     }
@@ -1544,9 +1872,10 @@
                 <span class="country-name">${c.countryNameTr}</span>
             </div>
             <div class="hero-remaining-wrap">
-                <div class="hero-remaining-label">Aylık Net Kalan</div>
+                <div class="hero-remaining-label">${t('heroLabel')}</div>
                 <div class="hero-remaining-value ${d.remaining < 0 ? 'negative' : ''}">${formatUsd(d.remaining)}</div>
-                <div class="hero-remaining-pct">brüt maaşın ${pctSign}%${Math.abs(d.remainingPctOfGross).toFixed(0)}'i</div>
+                <div class="hero-remaining-pct">${t('pctOfGross', {pct: (pctSign + Math.abs(d.remainingPctOfGross).toFixed(0))})}</div>
+                ${c.isHouseholdCombined ? `<div style="margin-top:6px; font-size:0.7rem; color:var(--accent-gold); font-weight:700;">${t('householdCombined', {role1: currentRole, role2: c.spouseRole})}</div>` : ''}
             </div>
             <div class="city-chip-row">${cityChipsHtml}</div>
             <div class="breakdown-bar">
@@ -1557,27 +1886,27 @@
             </div>
             <div class="stat-grid">
                 <div class="stat-box">
-                    <div class="stat-label">Brüt / Yıl</div>
+                    <div class="stat-label">${t('statGrossYear')}</div>
                     <div class="stat-value">${formatUsd(c.grossAnnualUsd)}</div>
                 </div>
                 <div class="stat-box">
-                    <div class="stat-label">Vergi Kaması</div>
+                    <div class="stat-label">${t('statTaxWedge')}</div>
                     <div class="stat-value tax">%${c.taxWedgePercent.toFixed(1)}</div>
                 </div>
                 <div class="stat-box">
-                    <div class="stat-label">Net / Ay</div>
+                    <div class="stat-label">${t('statNetMonth')}</div>
                     <div class="stat-value">${formatUsd(d.netMonthly)}</div>
                 </div>
                 <div class="stat-box">
-                    <div class="stat-label">Kira / Ay</div>
+                    <div class="stat-label">${t('statRentMonth')}</div>
                     <div class="stat-value rent">${formatUsd(d.rent)}</div>
                 </div>
                 <div class="stat-box">
-                    <div class="stat-label">Diğer Gider</div>
+                    <div class="stat-label">${t('statOtherExpense')}</div>
                     <div class="stat-value">${formatUsd(d.expense)}</div>
                 </div>
                 <div class="stat-box">
-                    <div class="stat-label">Enflasyon 🌍</div>
+                    <div class="stat-label">${t('statInflation')}</div>
                     <div class="stat-value">${inflationHtml}</div>
                 </div>
             </div>
@@ -1683,7 +2012,7 @@
             : prices;
 
         if (filtered.length === 0) {
-            container.innerHTML = '<div class="loading-state">🔍 Aramanla eşleşen ülke bulunamadı.</div>';
+            container.innerHTML = `<div class="loading-state">${t('noSearchMatch')}</div>`;
             return;
         }
 
@@ -1762,6 +2091,7 @@
     function setupCarModeToggle() {
         document.getElementById('carModeBtn').addEventListener('click', async () => {
             if (quizModeActive) exitQuizMode();
+            if (recommendModeActive) exitRecommendMode();
             carModeActive = true;
             document.getElementById('normalModeWrap').style.display = 'none';
             document.getElementById('carModeWrap').style.display = '';
@@ -1793,10 +2123,12 @@
             }
         });
 
-        // Paylaş'a basınca menü kapansın
         document.getElementById('shareBtn').addEventListener('click', () => {
             panel.classList.remove('open');
         });
+
+        document.getElementById('langTrBtn').addEventListener('click', () => setLanguage('tr'));
+        document.getElementById('langEnBtn').addEventListener('click', () => setLanguage('en'));
     }
 
     function setupFiltersMenu() {
@@ -1832,6 +2164,68 @@
                 closeFiltersMenu();
             });
         });
+    }
+
+    let currentSpouseRole = null;
+
+    function setupSpouseRoleAutocomplete() {
+        const input = document.getElementById('spouseRoleSelectInput');
+        const dropdown = document.getElementById('spouseRoleDropdown');
+
+        function closeDropdown() {
+            dropdown.classList.remove('open');
+            dropdown.innerHTML = '';
+        }
+
+        function renderMatches() {
+            const query = input.value.trim().toLocaleLowerCase('tr-TR');
+            const matches = allRoles.filter(r => r.role.toLocaleLowerCase('tr-TR').includes(query));
+            dropdown.innerHTML = '';
+            if (matches.length === 0) { closeDropdown(); return; }
+
+            matches.forEach(r => {
+                const item = document.createElement('div');
+                item.className = 'role-dropdown-item';
+                item.innerHTML = `<span>${r.role}</span>`;
+                item.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    input.value = r.role;
+                    currentSpouseRole = r.role;
+                    closeDropdown();
+                    loadCountries();
+                    closeFiltersMenu();
+                });
+                dropdown.appendChild(item);
+            });
+            dropdown.classList.add('open');
+        }
+
+        input.addEventListener('focus', () => { input.value = ''; renderMatches(); });
+        input.addEventListener('input', renderMatches);
+        input.addEventListener('blur', () => {
+            setTimeout(() => {
+                closeDropdown();
+                if (!input.value.trim()) {
+                    input.value = currentSpouseRole || '';
+                }
+            }, 150);
+        });
+        input.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDropdown(); });
+    }
+
+    // 👥 Hane tipi "Bekar" değilse eşin mesleği kutusunu göster, "Bekar" ise
+    // gizle ve seçimi sıfırla (tekrar tek kişilik hesaba dönsün).
+    function updateSpouseRoleVisibility() {
+        const section = document.getElementById('spouseRoleSection');
+        if (currentHousehold === 'single') {
+            section.style.display = 'none';
+            if (currentSpouseRole) {
+                currentSpouseRole = null;
+                document.getElementById('spouseRoleSelectInput').value = '';
+            }
+        } else {
+            section.style.display = '';
+        }
     }
 
     let currentCountrySearch = '';
@@ -1912,7 +2306,7 @@
         list.classList.toggle('compare-grid', compareActive && displayCountries.length === 2);
 
         if (displayCountries.length === 0) {
-            list.innerHTML = '<div class="loading-state">🔍 Aramanla eşleşen ülke bulunamadı.</div>';
+            list.innerHTML = `<div class="loading-state">${t('noSearchMatch')}</div>`;
             return;
         }
 
@@ -2018,13 +2412,44 @@
 
     async function loadCountries() {
         const list = document.getElementById('countryList');
-        list.innerHTML = '<div class="loading-state">Veriler yükleniyor...</div>';
+        list.innerHTML = `<div class="loading-state">${t('loading')}</div>`;
         try {
-            const res = await fetch(`/api/countries?role=${encodeURIComponent(currentRole)}&household=${encodeURIComponent(currentHousehold)}&experience=${encodeURIComponent(currentExperience)}`);
-            const countries = await res.json();
-            renderCountries(countries);
+            const primaryUrl = `/api/countries?role=${encodeURIComponent(currentRole)}&household=${encodeURIComponent(currentHousehold)}&experience=${encodeURIComponent(currentExperience)}`;
+
+            if (currentHousehold !== 'single' && currentSpouseRole) {
+                // 👥 İki kişilik hane: eşin mesleğini de çekip gelirleri
+                // topluyoruz. Kira/gider TEK ev/hane için olduğundan ikinci
+                // sorgudan tekrar alınmıyor — sadece maaş/net gelir toplanıyor.
+                const spouseUrl = `/api/countries?role=${encodeURIComponent(currentSpouseRole)}&household=${encodeURIComponent(currentHousehold)}&experience=${encodeURIComponent(currentExperience)}`;
+                const [primaryRes, spouseRes] = await Promise.all([fetch(primaryUrl), fetch(spouseUrl)]);
+                const primaryData = await primaryRes.json();
+                const spouseData = await spouseRes.json();
+                const spouseByCountry = Object.fromEntries(spouseData.map(c => [c.countryCode, c]));
+
+                const combined = primaryData.map(c => {
+                    const spouse = spouseByCountry[c.countryCode];
+                    if (!spouse) return c;
+                    const combinedGross = c.grossAnnualUsd + spouse.grossAnnualUsd;
+                    const combinedNetAnnual = c.netAnnualUsd + spouse.netAnnualUsd;
+                    const combinedRemaining = (combinedNetAnnual / 12) - c.monthlyRentUsd - c.monthlyExpenseUsd;
+                    return {
+                        ...c,
+                        grossAnnualUsd: combinedGross,
+                        netAnnualUsd: combinedNetAnnual,
+                        monthlyNetRemainingUsd: combinedRemaining,
+                        isHouseholdCombined: true,
+                        spouseRole: currentSpouseRole
+                    };
+                }).sort((a, b) => b.monthlyNetRemainingUsd - a.monthlyNetRemainingUsd);
+
+                renderCountries(combined);
+            } else {
+                const res = await fetch(primaryUrl);
+                const countries = await res.json();
+                renderCountries(countries);
+            }
         } catch (e) {
-            list.innerHTML = '<div class="loading-state">❌ Veriler yüklenemedi.</div>';
+            list.innerHTML = `<div class="loading-state">${t('loadError')}</div>`;
         }
     }
 
@@ -2083,6 +2508,7 @@
                 currentHousehold = btn.dataset.key;
                 row.querySelectorAll('.household-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
+                updateSpouseRoleVisibility();
                 loadCountries();
                 closeFiltersMenu();
             });
@@ -2196,11 +2622,14 @@
 
     async function init() {
         applyQueryParams();
+        applyStaticTranslations();
         await Promise.all([loadRoles(), loadHouseholds(), loadExperienceTiers()]);
         setupRoleAutocomplete();
         renderHouseholdToggle();
         renderExperienceToggle();
         setupFiltersMenu();
+        setupSpouseRoleAutocomplete();
+        updateSpouseRoleVisibility();
         renderCompareControls();
         setupShareButton();
         setupSettingsMenu();
@@ -2210,6 +2639,7 @@
         setupCarCountrySearch();
         setupQuizModeToggle();
         setupCarModeToggle();
+        setupRecommendMode();
         await loadCountries();
     }
 

@@ -50,13 +50,19 @@ data class DataCoverageRow(
     val isRealCost: Boolean
 )
 
+@Serializable
+data class QuizRecord(val playerName: String, val streak: Int, val achievedAt: String)
+
+@Serializable
+data class QuizRecordSubmission(val playerName: String, val streak: Int)
+
 object DatabaseClient {
 
     // 🔄 Bu sayıyı, seed verisinin YAPISINI değiştiren her değişiklikte (yeni rol,
     // yeni ülke, yeni kolon vb.) elle 1 artırıyoruz. Uygulama açılışta bu sayıyı
     // veritabanındaki kayıtlı değerle karşılaştırıyor; uyuşmazsa netkalan.db'yi
     // ELLE SİLMEYE GEREK KALMADAN kendi kendine sıfırlayıp yeniden seed ediyor.
-    private const val SCHEMA_VERSION = 7
+    private const val SCHEMA_VERSION = 13
 
     // 🌍 World Bank'ten arka planda çekilen GERÇEK işsizlik/enflasyon verisi burada
     // önbelleğe alınıyor (Application.kt başlangıçta doldurup güncelliyor).
@@ -90,7 +96,8 @@ object DatabaseClient {
         "JP" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("Tokyo", 1.3, 1.15), CityOption("Osaka", 0.85, 0.9), CityOption("Yokohama", 1.1, 1.0)),
         "AE" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("Dubai", 1.4, 1.2), CityOption("Abu Dabi", 1.1, 1.0)),
         "CN" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("Şangay", 1.5, 1.2), CityOption("Pekin", 1.4, 1.15), CityOption("Shenzhen", 1.35, 1.1)),
-        "RU" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("Moskova", 1.6, 1.3), CityOption("St. Petersburg", 1.2, 1.1))
+        "RU" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("Moskova", 1.6, 1.3), CityOption("St. Petersburg", 1.2, 1.1)),
+        "DK" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("Kopenhag", 1.4, 1.15), CityOption("Aarhus", 0.9, 0.95))
     )
 
     // 👪 Hane tipi ayarları — vergi kaması deltası (yüzde puan, OECD Taxing Wages'in
@@ -122,7 +129,7 @@ object DatabaseClient {
         "Cloud Engineer" to 0.971,
         "Data Engineer" to 0.882,
         "Data Scientist / ML Engineer" to 0.941,
-        "Security Professional" to 0.794,
+        "Siber Güvenlik Uzmanı" to 0.794,
         "Engineering Manager" to 1.132
     )
 
@@ -133,7 +140,7 @@ object DatabaseClient {
         "US" to 65000.0, "DE" to 58000.0, "GB" to 48000.0, "NL" to 64000.0,
         "TR" to 15000.0, "IN" to 3000.0, "BR" to 10000.0, "CA" to 59000.0,
         "PL" to 24000.0, "AU" to 62000.0, "CH" to 95000.0, "FR" to 40000.0, "JP" to 35000.0,
-        "AE" to 40000.0, "CN" to 18000.0, "RU" to 12000.0
+        "AE" to 40000.0, "CN" to 18000.0, "RU" to 12000.0, "DK" to 82000.0
     )
 
     // 👔 Tech-olmayan meslekler için, dünya genelinde tipik olarak ulusal ortalama
@@ -179,6 +186,70 @@ object DatabaseClient {
         "CH" to 93225.0
     )
 
+    // 🩺 Doktor için GERÇEK maaş — 16 ülkenin HEPSİ! Kaynak: worldpopulationreview.com
+    // "Doctor Pay by Country 2026" (ERI SalaryExpert + Medic Footprints + World of
+    // Statistics kaynaklarını birleştiren güvenilir toplu tablo).
+    private val realDoctorSalaryUsd = mapOf(
+        "US" to 268083.0, "CH" to 266900.0, "AU" to 199071.0, "CA" to 181623.0,
+        "AE" to 178500.0, "NL" to 171400.0, "DE" to 168700.0, "GB" to 163200.0,
+        "FR" to 155000.0, "JP" to 142000.0, "CN" to 92600.0, "PL" to 61400.0,
+        "TR" to 63100.0, "BR" to 51984.0, "RU" to 41300.0, "IN" to 31200.0
+    )
+
+    // ⚖️ Avukat için GERÇEK veri — dürüst not: bu meslekte kaynaklar arası
+    // TUTARSIZLIK çok yüksek (örn. Hollanda'da bile kaynaklar €49K-€108K arası
+    // değişiyor, 2 katından fazla fark). Bu yüzden sadece ERI SalaryExpert'in
+    // (tutarlı metodoloji, diğer rollerde de kullandığımız kaynak) verdiği ve
+    // makul gördüğüm 6 ülkeyi ekliyoruz. ABD için ERI yerine resmi BLS rakamı
+    // kullanıldı (daha güvenilir, devlet kaynaklı).
+    private val realLawyerSalaryUsd = mapOf(
+        "US" to 135740.0,   // BLS resmi medyan
+        "CH" to 215378.0,   // ERI (€187,285)
+        "GB" to 118791.0,   // ERI (€103,297)
+        "NL" to 124502.0,   // ERI (€108,263)
+        "FR" to 105375.0,   // ERI (€91,630)
+        "TR" to 28631.0     // ERI (€24,897)
+    )
+
+    // 👩‍⚕️ Hemşire için GERÇEK veri — 4 ülke, birden fazla kaynağın kabaca
+    // örtüştüğü (BLS + Credenza + Seven Seas + diğerleri) rakamlar.
+    private val realNurseSalaryUsd = mapOf(
+        "US" to 101420.0,  // BLS resmi
+        "CH" to 115000.0,  // birden fazla kaynağın ortak aralığı
+        "AU" to 82000.0,
+        "CA" to 70000.0
+    )
+
+    // 🍎 Öğretmen için GERÇEK veri — OECD'nin resmi "Education at a Glance"
+    // raporundan (Statista aktarımı, PPP-ayarlı, ilkokul öğretmeni ortalaması).
+    private val realTeacherSalaryUsd = mapOf(
+        "US" to 68153.0,
+        "PL" to 55407.0,
+        "DE" to 92000.0,
+        "NL" to 91000.0,
+        "CH" to 90000.0
+    )
+
+    // 💼 Muhasebeci için GERÇEK veri.
+    private val realAccountantSalaryUsd = mapOf(
+        "US" to 79880.0,   // BLS resmi
+        "GB" to 72511.0,   // mpeslearning ortalama (£54,000)
+        "AU" to 80000.0    // salarybyrole (aggregated)
+    )
+
+    // 🏛️ Mimar için GERÇEK veri (PayScale, tek kaynak — Doktor kadar çapraz
+    // doğrulanmadı, ama yine de gerçek anket verisi).
+    private val realArchitectSalaryUsd = mapOf(
+        "DE" to 46920.0,   // PayScale (€40,800)
+        "GB" to 49067.0    // PayScale (£36,533)
+    )
+
+    // 🛍️ Perakende/Hizmet Çalışanı için GERÇEK veri (BLS resmi + worldsalaries.com).
+    private val realRetailSalaryUsd = mapOf(
+        "US" to 37460.0,   // BLS resmi medyan
+        "DE" to 33845.0    // worldsalaries.com ortalama
+    )
+
     // 🌍 Türkçe/İngilizce ikili arama için — tech roller zaten İngilizce, sadece
     // tech-olmayan (Türkçe) rollerin İngilizce karşılığı gerekiyor.
     private val nonTechRoleAliasEn = mapOf(
@@ -219,6 +290,24 @@ object DatabaseClient {
         conn.createStatement().use { stmt ->
             stmt.execute("PRAGMA journal_mode=WAL;")
             stmt.execute("PRAGMA busy_timeout=5000;")
+        }
+
+        // 🏆 Tahmin modu GLOBAL liderlik tablosu — country_financials'tan bağımsız,
+        // şema versiyonu değişse bile SİLİNMİYOR (kullanıcıların rekoru kaybolmasın).
+        // ⚠️ Dürüst not: Render free tier'da kalıcı disk yok — sunucu her yeniden
+        // başladığında (uzun süre inaktiflik/yeni deploy) bu tablo da sıfırlanıyor.
+        // Yani "global rekor" aslında "son yeniden başlatmadan beri global rekor".
+        conn.createStatement().use { stmt ->
+            stmt.execute(
+                """
+                CREATE TABLE IF NOT EXISTS quiz_records (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    player_name TEXT NOT NULL,
+                    streak INTEGER NOT NULL,
+                    achieved_at TEXT NOT NULL
+                )
+                """.trimIndent()
+            )
         }
 
         if (isNew) {
@@ -321,6 +410,8 @@ object DatabaseClient {
                 "Genel piyasa gözlemi (yaklaşık)", "Genel piyasa gözlemi (yaklaşık)", "2026-08"),
             SeedRow("RU", "Rusya", 19000.0, 13.0, 500.0, 400.0,
                 "Genel piyasa gözlemi (yaklaşık, vergi oranı %13 sabit/resmi)", "Genel piyasa gözlemi (yaklaşık, veri güncelliği kısıtlı olabilir)", "2026-08"),
+            SeedRow("DK", "Danimarka", 95000.0, 35.0, 1400.0, 1000.0,
+                "ERI SalaryExpert 2026 (yaklaşık, gerçek DKK 649,949/yıl rakamından çevrilmiş)", "Genel piyasa gözlemi (yaklaşık)", "2026-08"),
         )
 
         val insertSql = """
@@ -348,10 +439,29 @@ object DatabaseClient {
                 // GERÇEK maaş verisi varsa, tahmini formül yerine o kullanılıyor.
                 val avgWage = nationalAvgWageUsd[row.code] ?: row.gross * 0.5
                 for ((role, multiplier) in nonTechRoleMultipliers) {
-                    val realOverride = if (role == "Makine Mühendisi") realMechanicalEngineerSalaryUsd[row.code] else null
+                    val realOverride = when (role) {
+                        "Makine Mühendisi" -> realMechanicalEngineerSalaryUsd[row.code]
+                        "Doktor" -> realDoctorSalaryUsd[row.code]
+                        "Avukat" -> realLawyerSalaryUsd[row.code]
+                        "Hemşire" -> realNurseSalaryUsd[row.code]
+                        "Öğretmen" -> realTeacherSalaryUsd[row.code]
+                        "Muhasebeci / Finans Uzmanı" -> realAccountantSalaryUsd[row.code]
+                        "Mimar" -> realArchitectSalaryUsd[row.code]
+                        "Perakende / Hizmet Çalışanı" -> realRetailSalaryUsd[row.code]
+                        else -> null
+                    }
                     val scaledGross = realOverride ?: (avgWage * multiplier)
                     val salarySrc = if (realOverride != null) {
-                        "ERI SalaryExpert 2026 — GERÇEK (profesyonel maaş anketi verisi)"
+                        when (role) {
+                            "Doktor" -> "worldpopulationreview.com 'Doctor Pay by Country 2026' — GERÇEK (SalaryExpert/Medic Footprints kaynaklı)"
+                            "Avukat" -> "ERI SalaryExpert / BLS 2026 — GERÇEK (not: bu meslekte kaynaklar arası tutarsızlık normalden yüksek)"
+                            "Hemşire" -> "BLS / çoklu kaynak ortalaması 2026 — GERÇEK"
+                            "Öğretmen" -> "OECD 'Education at a Glance' (Statista aktarımı) — GERÇEK, resmi"
+                            "Muhasebeci / Finans Uzmanı" -> "BLS / çoklu kaynak 2026 — GERÇEK"
+                            "Mimar" -> "PayScale 2026 — GERÇEK (tek kaynak, çapraz doğrulanmadı)"
+                            "Perakende / Hizmet Çalışanı" -> "BLS / worldsalaries.com 2026 — GERÇEK"
+                            else -> "ERI SalaryExpert 2026 — GERÇEK (profesyonel maaş anketi verisi)"
+                        }
                     } else {
                         "Ülke ortalama ücreti × BLS-türetilmiş meslek oranı (ABD verisine dayalı tahmin, ülkeye özel veri değil)"
                     }
@@ -443,7 +553,8 @@ object DatabaseClient {
         "TR" to 79550.0,
         "CA" to 33860.0,
         "CH" to 53280.0,
-        "FR" to 41060.0
+        "FR" to 41060.0,
+        "DK" to 88325.0  // Danimarka'nın GERÇEK, resmi kayıt vergisi formülü (motorst.dk) Audi'nin Almanya fiyatına uygulanarak hesaplandı — dünyanın en yüksek araç vergilerinden biri
     )
 
     data class CarPriceEstimate(val priceUsd: Double, val isReal: Boolean)
@@ -473,7 +584,8 @@ object DatabaseClient {
     private val realCarPricesByModelAndCountry = mapOf(
         "Toyota Corolla" to mapOf("TR" to 2284000.0 / 45.0),  // ~2.284M TL, Toyota TR resmi liste
         "Honda CR-V" to mapOf("TR" to 2200000.0 / 45.0),       // ~2.2M TL, xenotomotiv/segment tutarlılığı
-        "Hyundai Tucson" to mapOf("TR" to 2361262.0 / 45.0)    // 2.361.262 TL, Hyundai TR resmi liste
+        "Hyundai Tucson" to mapOf("TR" to 2361262.0 / 45.0),   // 2.361.262 TL, Hyundai TR resmi liste
+        "Volkswagen Golf" to mapOf("DK" to 400000.0 / 6.85)    // ~400.000 DKK (380-420K aralığı ortası), exploringdenmark.com gerçek örnek hesap
     )
 
     data class CarModel(val name: String, val category: String, val usBasePriceUsd: Double)
@@ -522,7 +634,7 @@ object DatabaseClient {
         "NL" to "Hollanda", "TR" to "Türkiye", "IN" to "Hindistan", "BR" to "Brezilya",
         "CA" to "Kanada", "PL" to "Polonya", "AU" to "Avustralya", "CH" to "İsviçre",
         "FR" to "Fransa", "JP" to "Japonya", "AE" to "Birleşik Arap Emirlikleri",
-        "CN" to "Çin", "RU" to "Rusya"
+        "CN" to "Çin", "RU" to "Rusya", "DK" to "Danimarka"
     )
 
     fun fetchCarModels(): List<CarModelInfo> = carModelsList.map { CarModelInfo(it.name, it.category) }
@@ -571,6 +683,38 @@ object DatabaseClient {
 
     fun fetchAllHouseholds(): List<HouseholdInfo> {
         return householdSettings.map { (key, adj) -> HouseholdInfo(key, adj.labelTr) }
+    }
+
+    // 🏆 Global liderlik tablosu — sadece en yüksek seriyi (rekor) döndürüyoruz.
+    fun fetchTopQuizRecord(): QuizRecord? {
+        return withConnection { conn ->
+            conn.prepareStatement("SELECT player_name, streak, achieved_at FROM quiz_records ORDER BY streak DESC, achieved_at ASC LIMIT 1").use { stmt ->
+                stmt.executeQuery().use { rs ->
+                    if (rs.next()) {
+                        QuizRecord(rs.getString("player_name"), rs.getInt("streak"), rs.getString("achieved_at"))
+                    } else null
+                }
+            }
+        }
+    }
+
+    // 🏆 Yeni bir seri gönderiliyor — sadece mevcut rekoru GERÇEKTEN geçiyorsa
+    // kaydediyoruz (aksi halde tabloyu boş yere şişirmeyelim).
+    fun submitQuizRecordIfBeatsCurrent(playerName: String, streak: Int): QuizRecord {
+        val current = fetchTopQuizRecord()
+        if (current == null || streak > current.streak) {
+            val safeName = playerName.trim().take(24).ifBlank { "Anonim" }
+            withConnection { conn ->
+                conn.prepareStatement("INSERT INTO quiz_records (player_name, streak, achieved_at) VALUES (?, ?, ?)").use { stmt ->
+                    stmt.setString(1, safeName)
+                    stmt.setInt(2, streak)
+                    stmt.setString(3, java.time.Instant.now().toString())
+                    stmt.executeUpdate()
+                }
+            }
+            return QuizRecord(safeName, streak, java.time.Instant.now().toString())
+        }
+        return current
     }
 
     // 🔍 TANI ENDPOINT'İ: her ülke×rol kombinasyonu için maaşın gerçek mi tahmini

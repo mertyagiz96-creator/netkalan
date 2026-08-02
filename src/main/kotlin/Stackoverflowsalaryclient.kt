@@ -62,7 +62,8 @@ object StackOverflowSalaryClient {
         "Japan" to "JP",
         "United Arab Emirates" to "AE",
         "China" to "CN",
-        "Russian Federation" to "RU", "Russia" to "RU"
+        "Russian Federation" to "RU", "Russia" to "RU",
+        "Denmark" to "DK"
     )
 
     // 💻 SO'nun "DevType" (çoklu seçim, noktalı virgülle ayrılmış metin) alanındaki
@@ -82,7 +83,7 @@ object StackOverflowSalaryClient {
         "engineer, data" to "Data Engineer",
         "machine learning" to "Data Scientist / ML Engineer",
         "data scientist" to "Data Scientist / ML Engineer",
-        "security" to "Security Professional",
+        "security" to "Siber Güvenlik Uzmanı",
         "engineering manager" to "Engineering Manager"
     )
 
