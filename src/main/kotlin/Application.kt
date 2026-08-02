@@ -118,11 +118,11 @@ fun main() {
             // 🏆 Tahmin modu GLOBAL liderlik tablosu — herkes aynı rekoru görüyor.
             get("/api/quiz-leaderboard") {
                 val record = DatabaseClient.fetchTopQuizRecord()
-                call.respond(record ?: DatabaseClient.QuizRecord("—", 0, ""))
+                call.respond(record ?: QuizRecord("—", 0, ""))
             }
 
             post("/api/quiz-leaderboard") {
-                val submission = call.receive<DatabaseClient.QuizRecordSubmission>()
+                val submission = call.receive<QuizRecordSubmission>()
                 val updated = DatabaseClient.submitQuizRecordIfBeatsCurrent(submission.playerName, submission.streak)
                 call.respond(updated)
             }
