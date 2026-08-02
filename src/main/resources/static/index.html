@@ -766,6 +766,7 @@
         </div>
         <div style="display:flex; gap:8px;">
             <button id="quizModeBtn" class="header-share-btn">🎲 Tahmin Modu</button>
+            <button id="quizBackToMenuBtn" class="header-share-btn" style="display:none;">🏠 Ana Menüye Dön</button>
             <button id="shareBtn" class="header-share-btn">🔗 Paylaş</button>
         </div>
     </div>
@@ -802,11 +803,7 @@
     </div>
 
     <div id="quizModeWrap" style="display:none;">
-        <div class="quiz-score-bar">
-            Skor: <b id="quizScoreText">0/0</b>
-            &nbsp;·&nbsp;
-            <button id="quizBackToMenuBtn" class="header-share-btn" style="display:inline-flex;">🏠 Ana Menüye Dön</button>
-        </div>
+        <div class="quiz-score-bar">Skor: <b id="quizScoreText">0/0</b></div>
         <div id="quizContainer"></div>
     </div>
 </div>
@@ -905,16 +902,18 @@
         quizModeActive = false;
         document.getElementById('normalModeWrap').style.display = '';
         document.getElementById('quizModeWrap').style.display = 'none';
-        document.getElementById('quizModeBtn').classList.remove('active');
+        document.getElementById('quizModeBtn').style.display = '';
+        document.getElementById('quizBackToMenuBtn').style.display = 'none';
     }
 
     function setupQuizModeToggle() {
         document.getElementById('quizModeBtn').addEventListener('click', () => {
-            quizModeActive = !quizModeActive;
-            document.getElementById('normalModeWrap').style.display = quizModeActive ? 'none' : '';
-            document.getElementById('quizModeWrap').style.display = quizModeActive ? '' : 'none';
-            document.getElementById('quizModeBtn').classList.toggle('active', quizModeActive);
-            if (quizModeActive) startQuizRound();
+            quizModeActive = true;
+            document.getElementById('normalModeWrap').style.display = 'none';
+            document.getElementById('quizModeWrap').style.display = '';
+            document.getElementById('quizModeBtn').style.display = 'none';
+            document.getElementById('quizBackToMenuBtn').style.display = '';
+            startQuizRound();
         });
 
         document.getElementById('quizBackToMenuBtn').addEventListener('click', exitQuizMode);
