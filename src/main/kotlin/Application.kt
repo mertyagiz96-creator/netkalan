@@ -36,6 +36,15 @@ private fun startMonthlyDataRefreshLoop() {
             }
             println("✅ World Bank verisi güncellendi (${SUPPORTED_COUNTRY_CODES.size} ülke).")
 
+            val costOfLiving = WhereNextClient.fetchCostOfLiving()
+            if (costOfLiving.isNotEmpty()) {
+                DatabaseClient.costOfLivingCache.clear()
+                DatabaseClient.costOfLivingCache.putAll(costOfLiving)
+                println("✅ WhereNext kira/gider verisi güncellendi (${costOfLiving.size} ülke).")
+            } else {
+                println("⚠️ WhereNext verisi bu turda alınamadı, mevcut önbellek korunuyor.")
+            }
+
             val realSalaries = StackOverflowSalaryClient.computeRealSalaries()
             if (realSalaries.isNotEmpty()) {
                 DatabaseClient.realSalaryCache.clear()
@@ -77,6 +86,12 @@ fun main() {
             // 👪 Seçilebilir hane tipi listesi (Bekar / Evli Çocuksuz / Evli 2 Çocuklu)
             get("/api/households") {
                 call.respond(DatabaseClient.fetchAllHouseholds())
+            }
+
+            // 🔍 Hangi ülke+rol kombinasyonunun GERÇEK, hangisinin tahmini olduğunu
+            // gösteren tanı endpoint'i — "hangi maaş yok" sorusuna cevap için.
+            get("/api/data-coverage") {
+                call.respond(DatabaseClient.fetchDataCoverage())
             }
 
             // 💰 ?role= ve ?household= parametreleriyle filtreleniyor, verilmezse

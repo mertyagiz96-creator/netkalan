@@ -36,7 +36,22 @@ data class CityOption(
 @Serializable
 data class HouseholdInfo(val key: String, val labelTr: String)
 
+@Serializable
+data class DataCoverageRow(
+    val countryCode: String,
+    val role: String,
+    val isRealSalary: Boolean,
+    val salarySampleSize: Int?,
+    val isRealCost: Boolean
+)
+
 object DatabaseClient {
+
+    // 🔄 Bu sayıyı, seed verisinin YAPISINI değiştiren her değişiklikte (yeni rol,
+    // yeni ülke, yeni kolon vb.) elle 1 artırıyoruz. Uygulama açılışta bu sayıyı
+    // veritabanındaki kayıtlı değerle karşılaştırıyor; uyuşmazsa netkalan.db'yi
+    // ELLE SİLMEYE GEREK KALMADAN kendi kendine sıfırlayıp yeniden seed ediyor.
+    private const val SCHEMA_VERSION = 3
 
     // 🌍 World Bank'ten arka planda çekilen GERÇEK işsizlik/enflasyon verisi burada
     // önbelleğe alınıyor (Application.kt başlangıçta doldurup güncelliyor).
@@ -48,6 +63,9 @@ object DatabaseClient {
     // fetchAllCountries bunu bulursa, tahmini/ölçeklenmiş rakam yerine bunu kullanır.
     val realSalaryCache = java.util.concurrent.ConcurrentHashMap<String, StackOverflowSalaryClient.RealSalary>()
     private const val MIN_SAMPLE_SIZE_FOR_REAL_DATA = 10 // bundan az yanıtlı kombinasyonlar güvenilmez sayılıyor
+
+    // 🏠 WhereNext'ten çekilen GERÇEK kira/gider verisi — key: ülke kodu ("US", "DE"...).
+    val costOfLivingCache = java.util.concurrent.ConcurrentHashMap<String, WhereNextClient.CostOfLiving>()
 
     // 🏙️ Şehir çarpanları TAHMİNİDİR — genel piyasa gözlemine dayanıyor, ilk
     // eleman her zaman "Ülke Ortalaması" (çarpan 1.0), diğerleri örnek şehirler.
@@ -119,6 +137,7 @@ object DatabaseClient {
         "Muhasebeci / Finans Uzmanı" to 1.2,
         "Pazarlama Yöneticisi" to 1.4,
         "İnşaat Mühendisi" to 1.15,
+        "Mimar" to 1.2,
         "Perakende / Hizmet Çalışanı" to 0.65
     )
 
@@ -132,6 +151,7 @@ object DatabaseClient {
         "Muhasebeci / Finans Uzmanı" to "Accountant / Finance",
         "Pazarlama Yöneticisi" to "Marketing Manager",
         "İnşaat Mühendisi" to "Civil Engineer",
+        "Mimar" to "Architect",
         "Perakende / Hizmet Çalışanı" to "Retail / Service Worker"
     )
 
@@ -161,10 +181,44 @@ object DatabaseClient {
             stmt.execute("PRAGMA journal_mode=WAL;")
             stmt.execute("PRAGMA busy_timeout=5000;")
         }
+
         if (isNew) {
             initSchemaAndSeed(conn)
+            setSchemaVersion(conn)
+        } else if (getStoredSchemaVersion(conn) != SCHEMA_VERSION) {
+            // 🔄 Şema/seed yapısı değişmiş — eski tabloları silip sıfırdan kuruyoruz.
+            // Bu sayede DatabaseClient.kt'yi güncelleyip çalıştırdığında netkalan.db'yi
+            // elle silmene HİÇ gerek kalmıyor, otomatik algılanıp yenileniyor.
+            println("🔄 Şema versiyonu değişmiş, netkalan.db otomatik olarak yeniden oluşturuluyor...")
+            conn.createStatement().use { stmt ->
+                stmt.execute("DROP TABLE IF EXISTS country_financials")
+                stmt.execute("DROP TABLE IF EXISTS schema_info")
+            }
+            initSchemaAndSeed(conn)
+            setSchemaVersion(conn)
         }
+
         return conn
+    }
+
+    private fun getStoredSchemaVersion(conn: Connection): Int {
+        return try {
+            conn.createStatement().use { stmt ->
+                stmt.execute("CREATE TABLE IF NOT EXISTS schema_info (version INTEGER)")
+                val rs = stmt.executeQuery("SELECT version FROM schema_info LIMIT 1")
+                if (rs.next()) rs.getInt("version") else -1
+            }
+        } catch (e: Exception) {
+            -1
+        }
+    }
+
+    private fun setSchemaVersion(conn: Connection) {
+        conn.createStatement().use { stmt ->
+            stmt.execute("CREATE TABLE IF NOT EXISTS schema_info (version INTEGER)")
+            stmt.execute("DELETE FROM schema_info")
+            stmt.execute("INSERT INTO schema_info (version) VALUES ($SCHEMA_VERSION)")
+        }
     }
 
     private fun initSchemaAndSeed(conn: Connection) {
@@ -292,6 +346,28 @@ object DatabaseClient {
         return householdSettings.map { (key, adj) -> HouseholdInfo(key, adj.labelTr) }
     }
 
+    // 🔍 TANI ENDPOINT'İ: her ülke×rol kombinasyonu için maaşın gerçek mi tahmini
+    // mi olduğunu ve varsa Stack Overflow örneklem büyüklüğünü listeler. Kira/gider
+    // için de WhereNext kapsamında olup olmadığını gösterir. "Hangi maaş gerçek
+    // değil" sorusuna elle bakmak yerine bunu kullan.
+    fun fetchDataCoverage(): List<DataCoverageRow> {
+        val allRoles = roleMultipliers.keys + nonTechRoleMultipliers.keys
+        val allCountries = cityOptionsByCountry.keys
+
+        return allCountries.flatMap { country ->
+            allRoles.map { role ->
+                val real = realSalaryCache["$country|$role"]
+                DataCoverageRow(
+                    countryCode = country,
+                    role = role,
+                    isRealSalary = real != null && real.sampleSize >= MIN_SAMPLE_SIZE_FOR_REAL_DATA,
+                    salarySampleSize = real?.sampleSize,
+                    isRealCost = costOfLivingCache.containsKey(country)
+                )
+            }
+        }.sortedWith(compareBy({ it.countryCode }, { it.role }))
+    }
+
     fun fetchAllCountries(role: String = "Backend Developer", household: String = "single"): List<CountryFinancials> {
         val result = mutableListOf<CountryFinancials>()
         val resolvedRole = if (roleMultipliers.containsKey(role) || nonTechRoleMultipliers.containsKey(role)) role else "Backend Developer"
@@ -330,12 +406,25 @@ object DatabaseClient {
                             // altına inmesin diye alt sınır koyuyoruz.
                             val taxWedge = (rs.getDouble("tax_wedge_percent") + adj.taxWedgeDelta).coerceAtLeast(0.0)
 
+                            // 🏠 Önce GERÇEK WhereNext verisine bakıyoruz. Varsa kira/gideri
+                            // onunla değiştiriyoruz (hane tipi çarpanı yine üstüne uygulanıyor).
+                            // Yoksa (WhereNext'te kapsam dışı bir ülkeyse) eski tahminî
+                            // rakama düşüyoruz — kaynak metninde bu açıkça belirtiliyor.
+                            val realCost = costOfLivingCache[countryCode]
+                            val baseRent = realCost?.monthlyRentUsd ?: rs.getDouble("monthly_rent_usd")
+                            val baseExpense = realCost?.monthlyExpenseUsd ?: rs.getDouble("monthly_expense_usd")
+                            val costSourceFinal = if (realCost != null) {
+                                "WhereNext Cost of Living Index 2026 — GERÇEK (World Bank ICP 2021 verisine dayanıyor)"
+                            } else {
+                                rs.getString("cost_source")
+                            }
+
                             // 🏙️ Şehir çarpanları burada UYGULANMIYOR — frontend, ülke ortalaması
                             // baz alınarak gelen "cities" listesindeki çarpanlarla kendi tarafında
                             // anlık hesaplıyor (ekstra network isteği olmadan şehir değiştirebilsin diye).
                             // Burada sadece hane tipi (aile büyüklüğü) çarpanı sunucu tarafında uygulanıyor.
-                            val rent = rs.getDouble("monthly_rent_usd") * adj.rentMultiplier
-                            val expense = rs.getDouble("monthly_expense_usd") * adj.expenseMultiplier
+                            val rent = baseRent * adj.rentMultiplier
+                            val expense = baseExpense * adj.expenseMultiplier
 
                             val netAnnual = gross * (1.0 - taxWedge / 100.0)
                             val monthlyNetRemaining = (netAnnual / 12.0) - rent - expense
@@ -352,7 +441,7 @@ object DatabaseClient {
                                     monthlyExpenseUsd = expense,
                                     monthlyNetRemainingUsd = monthlyNetRemaining,
                                     salarySource = salarySourceFinal,
-                                    costSource = rs.getString("cost_source"),
+                                    costSource = costSourceFinal,
                                     lastUpdated = rs.getString("last_updated"),
                                     cities = cityOptionsByCountry[countryCode] ?: emptyList(),
                                     unemploymentPercent = macro?.unemploymentPercent,

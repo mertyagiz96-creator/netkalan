@@ -8,6 +8,17 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- 💡 Microsoft Clarity — ziyaretçi istatistikleri için. Tamamen tarayıcı
+         tarafında çalışan, asenkron bir script; backend'e ve arama performansına
+         hiçbir etkisi yoktur. AŞAĞIDAKİ "YOUR_CLARITY_PROJECT_ID" kısmını
+         clarity.microsoft.com'dan aldığın gerçek proje ID'siyle değiştir. -->
+    <script type="text/javascript">
+        (function(c,l,a,r,i,t,y){
+            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window, document, "clarity", "script", "xvtbwlxl60");
+    </script>
     <style>
         :root {
             --primary-green: #3e5f47;
@@ -371,20 +382,26 @@
             display: flex;
             align-items: center;
             gap: 6px;
-            padding: 5px 12px;
+            padding: 10px 18px;
             border-radius: 20px;
-            border: 1px solid rgba(var(--fg-rgb), 0.2);
-            background: transparent;
-            color: rgba(var(--fg-rgb), 0.6);
-            font-size: 0.7rem;
-            font-weight: 600;
+            border: 2px solid rgba(var(--accent-gold-rgb), 0.5);
+            background: rgba(var(--accent-gold-rgb), 0.08);
+            color: var(--accent-gold);
+            font-size: 0.85rem;
+            font-weight: 700;
             cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .compare-select-chip:hover {
+            background: rgba(var(--accent-gold-rgb), 0.18);
+            border-color: var(--accent-gold);
         }
 
         .compare-select-chip.selected {
-            border-color: var(--accent-gold);
-            color: var(--accent-gold);
-            background: rgba(var(--accent-gold-rgb), 0.12);
+            border-color: var(--light-green);
+            color: var(--light-green);
+            background: rgba(var(--light-green-rgb), 0.15);
         }
 
         .country-card.compare-selected { border-color: var(--accent-gold); }
@@ -492,6 +509,10 @@
 
         @media (max-width: 650px) {
             .stat-grid { grid-template-columns: repeat(3, 1fr); }
+            .life-score-grid { grid-template-columns: repeat(2, 1fr); gap: 14px 10px; }
+            .life-score-stars { font-size: 1.05rem; }
+            .compare-select-row { justify-content: stretch; }
+            .compare-select-chip { width: 100%; justify-content: center; padding: 12px; font-size: 0.9rem; }
             .country-card-top { flex-direction: column; align-items: flex-start; }
             .net-remaining-label { text-align: left; }
         }
@@ -526,12 +547,13 @@
 
     <div class="disclaimer">
         <b>⚠️ Veri notu:</b> <b>✓ GERÇEK VERİ</b> etiketli maaşlar Stack Overflow Developer Survey'in
-        resmi, ham anket verisinden (StackExchange'in kendi GitHub deposu) o ülke+rol için hesaplanan
-        gerçek medyan değerdir — tahmin değil. Yeterli yanıt sayısı olmayan kombinasyonlarda ise
-        <b>tahmini/ölçeklenmiş</b> rakamlar kullanılıyor (bu açıkça belirtiliyor). <b>Doktor/Öğretmen/Avukat
-        gibi tech-olmayan roller</b> için hâlâ gerçek bir kaynak yok, ülke ortalama ücretine göre kaba bir
-        tahmin. <b>🌍 Enflasyon ve İş Fırsatı yıldızı, World Bank'in resmi verisinden</b> hesaplanıyor —
-        bunlar da gerçek. Tüm veriler ayda bir otomatik olarak yenileniyor.
+        resmi ham verisinden hesaplanan gerçek medyandır. <b>Kira ve gider artık WhereNext Cost of
+        Living Index'ten (World Bank ICP 2021 verisine dayanan, gerçek) geliyor</b> — toplam tutar
+        %100 gerçek, kira/diğer-gider ayrımı WhereNext'in kendi alt-endekslerinden orantılı olarak
+        hesaplanıyor. <b>🌍 Enflasyon ve İş Fırsatı yıldızı, World Bank'in resmi verisinden</b>
+        hesaplanıyor. Geriye kalan tahmini alanlar: yeterli anket yanıtı olmayan meslek/ülke
+        kombinasyonlarında maaş, ve <b>Doktor/Öğretmen/Avukat gibi tech-olmayan roller</b>. Tüm
+        veriler ayda bir otomatik olarak yenileniyor.
     </div>
 </div>
 
@@ -660,8 +682,12 @@
         `).join('');
 
         const isRealSalary = c.salarySource.includes('GERÇEK');
+        const isRealCost = c.costSource.includes('GERÇEK');
         const salaryBadge = isRealSalary
-            ? '<span style="color:var(--light-green);font-weight:700;">✓ GERÇEK VERİ</span> · '
+            ? '<span style="color:var(--light-green);font-weight:700;">✓ MAAŞ GERÇEK</span> · '
+            : '';
+        const costBadge = isRealCost
+            ? '<span style="color:var(--light-green);font-weight:700;">✓ KİRA/GİDER GERÇEK</span> · '
             : '';
         const inflationHtml = (c.inflationPercent !== null && c.inflationPercent !== undefined)
             ? `%${c.inflationPercent.toFixed(1)}`
@@ -726,7 +752,7 @@
             </div>
             ${buildLifeScoreHtml(d, c)}
             <div class="source-line">
-                ${salaryBadge}📊 ${c.salarySource} · 🏠 ${c.costSource} · Son güncelleme: ${c.lastUpdated}
+                ${salaryBadge}${costBadge}📊 ${c.salarySource} · 🏠 ${c.costSource} · Son güncelleme: ${c.lastUpdated}
             </div>
         `;
     }
@@ -920,17 +946,23 @@
             dropdown.classList.add('open');
         }
 
-        // 💡 Kutuya tıklayınca/odaklanınca: içindeki metni otomatik seçili hale
-        // getiriyoruz (yazmaya başlarsa direkt üzerine yazsın) VE filtreyi
-        // uygulamadan TÜM rolleri gösteriyoruz — yoksa kutuda zaten "Backend
-        // Developer" yazdığı için filtre kendisiyle eşleşip tek seçenek gibi
-        // görünüyordu (gerçek bir kullanılabilirlik hatasıydı).
+        // 💡 Kutuya tıklayınca/odaklanınca: içindeki metni TAMAMEN TEMİZLİYORUZ ve
+        // filtre uygulamadan TÜM rolleri gösteriyoruz — kullanıcı elle silmek
+        // zorunda kalmasın diye. Bir şey seçmeden kutudan çıkarsa (blur), eski
+        // seçili role geri dönüyoruz, kutu boş kalmasın diye.
         input.addEventListener('focus', () => {
-            input.select();
+            input.value = '';
             renderMatches(true);
         });
         input.addEventListener('input', () => renderMatches(false));
-        input.addEventListener('blur', () => setTimeout(closeDropdown, 150));
+        input.addEventListener('blur', () => {
+            setTimeout(() => {
+                closeDropdown();
+                if (!input.value.trim()) {
+                    input.value = currentRole;
+                }
+            }, 150);
+        });
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 const exact = allRoles.find(r => r.role.toLocaleLowerCase('tr-TR') === input.value.trim().toLocaleLowerCase('tr-TR'));
