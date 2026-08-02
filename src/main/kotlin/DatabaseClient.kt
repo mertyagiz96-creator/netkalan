@@ -90,14 +90,15 @@ object DatabaseClient {
     // + OECD'nin resmi "modified equivalence scale" ile gider çarpanı (1 yetişkin=1,
     // +yetişkin=0.5, +çocuk=0.3) + kira için kabaca oda sayısı ihtiyacı çarpanı.
     private val householdSettings = linkedMapOf(
-        "single" to HouseholdAdjustment("Bekar", taxWedgeDelta = 0.0, expenseMultiplier = 1.0, rentMultiplier = 1.0),
-        "married_no_kids" to HouseholdAdjustment("Evli, Çocuksuz", taxWedgeDelta = -3.0, expenseMultiplier = 1.5, rentMultiplier = 1.3),
-        "married_1kid" to HouseholdAdjustment("Evli, 1 Çocuklu", taxWedgeDelta = -5.5, expenseMultiplier = 1.8, rentMultiplier = 1.45),
-        "married_2kids" to HouseholdAdjustment("Evli, 2 Çocuklu", taxWedgeDelta = -8.0, expenseMultiplier = 2.1, rentMultiplier = 1.6)
+        "single" to HouseholdAdjustment("Bekar", taxWedgeDelta = 0.0, expenseMultiplier = 1.0, rentMultiplier = 1.0, numberOfKids = 0),
+        "married_no_kids" to HouseholdAdjustment("Evli, Çocuksuz", taxWedgeDelta = -3.0, expenseMultiplier = 1.5, rentMultiplier = 1.3, numberOfKids = 0),
+        "married_1kid" to HouseholdAdjustment("Evli, 1 Çocuklu", taxWedgeDelta = -5.5, expenseMultiplier = 1.8, rentMultiplier = 1.45, numberOfKids = 1),
+        "married_2kids" to HouseholdAdjustment("Evli, 2 Çocuklu", taxWedgeDelta = -8.0, expenseMultiplier = 2.1, rentMultiplier = 1.6, numberOfKids = 2)
     )
 
     private data class HouseholdAdjustment(
-        val labelTr: String, val taxWedgeDelta: Double, val expenseMultiplier: Double, val rentMultiplier: Double
+        val labelTr: String, val taxWedgeDelta: Double, val expenseMultiplier: Double,
+        val rentMultiplier: Double, val numberOfKids: Int
     )
 
     // 💡 Stack Overflow Developer Survey 2025 GLOBAL ortalamalarından türetilmiş
@@ -343,6 +344,23 @@ object DatabaseClient {
         val rent: Double, val expense: Double, val salarySrc: String, val costSrc: String, val updated: String
     )
 
+    // 🎓 Okul ücreti tahmini — GERÇEK bir çapa noktasından (New York uluslararası
+    // okul ortalaması: $43,003/yıl, doris.school/international-schools-database
+    // kaynaklı, 36 okul ortalaması) başlayıp, elimizdeki GERÇEK WhereNext yaşam
+    // maliyeti endeksiyle diğer ülkelere ORANTILI ölçekleniyor. Yani tamamen
+    // uydurma değil ama şehir-bazlı direkt gerçek veri de değil — bir çapa +
+    // gerçek endeks kombinasyonu. Londra için de gerçek aralık (~£24-38K, yani
+    // ~$35K) ile çapraz kontrol edildi, makul çıktı.
+    private const val NY_REAL_SCHOOL_COST_USD = 43003.0
+
+    private fun estimateAnnualSchoolCostUsd(countryCode: String): Double? {
+        val usReal = costOfLivingCache["US"] ?: return null
+        val countryReal = costOfLivingCache[countryCode] ?: return null
+        val usTotal = usReal.monthlyTotalUsd
+        val countryTotal = countryReal.monthlyTotalUsd
+        if (usTotal <= 0) return null
+        return NY_REAL_SCHOOL_COST_USD * (countryTotal / usTotal)
+    }
     fun fetchAllHouseholds(): List<HouseholdInfo> {
         return householdSettings.map { (key, adj) -> HouseholdInfo(key, adj.labelTr) }
     }
@@ -414,18 +432,30 @@ object DatabaseClient {
                             val realCost = costOfLivingCache[countryCode]
                             val baseRent = realCost?.monthlyRentUsd ?: rs.getDouble("monthly_rent_usd")
                             val baseExpense = realCost?.monthlyExpenseUsd ?: rs.getDouble("monthly_expense_usd")
-                            val costSourceFinal = if (realCost != null) {
-                                "WhereNext Cost of Living Index 2026 — GERÇEK (World Bank ICP 2021 verisine dayanıyor)"
-                            } else {
-                                rs.getString("cost_source")
-                            }
 
                             // 🏙️ Şehir çarpanları burada UYGULANMIYOR — frontend, ülke ortalaması
                             // baz alınarak gelen "cities" listesindeki çarpanlarla kendi tarafında
                             // anlık hesaplıyor (ekstra network isteği olmadan şehir değiştirebilsin diye).
                             // Burada sadece hane tipi (aile büyüklüğü) çarpanı sunucu tarafında uygulanıyor.
                             val rent = baseRent * adj.rentMultiplier
-                            val expense = baseExpense * adj.expenseMultiplier
+                            var expense = baseExpense * adj.expenseMultiplier
+
+                            // 🎓 Çocuklu hane tiplerinde okul maliyetini aylık gidere ekliyoruz.
+                            var schoolCostNote = ""
+                            if (adj.numberOfKids > 0) {
+                                val annualSchoolCost = estimateAnnualSchoolCostUsd(countryCode)
+                                if (annualSchoolCost != null) {
+                                    val monthlySchoolCost = (annualSchoolCost * adj.numberOfKids) / 12.0
+                                    expense += monthlySchoolCost
+                                    schoolCostNote = " + okul ücreti (NY gerçek çapası × WhereNext endeksiyle ölçeklenmiş tahmin)"
+                                }
+                            }
+
+                            val costSourceFinal = (if (realCost != null) {
+                                "WhereNext Cost of Living Index 2026 — GERÇEK (World Bank ICP 2021 verisine dayanıyor)"
+                            } else {
+                                rs.getString("cost_source")
+                            }) + schoolCostNote
 
                             val netAnnual = gross * (1.0 - taxWedge / 100.0)
                             val monthlyNetRemaining = (netAnnual / 12.0) - rent - expense

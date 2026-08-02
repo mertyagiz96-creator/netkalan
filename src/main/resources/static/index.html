@@ -339,9 +339,60 @@
             color: var(--accent-gold);
         }
 
-        /* 💰 Net kalan tutarı iyice öne çıkaralım — bu sitenin ana metriği */
-        .net-remaining-box {
-            text-align: right;
+        .hero-remaining-wrap {
+            text-align: center;
+            padding: 18px 10px 22px 10px;
+            margin-bottom: 16px;
+            background: linear-gradient(180deg, rgba(var(--light-green-rgb), 0.08) 0%, transparent 100%);
+            border-radius: 8px;
+        }
+
+        .hero-remaining-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: rgba(var(--fg-rgb), 0.5);
+            margin-bottom: 6px;
+        }
+
+        .hero-remaining-value {
+            font-size: 2.4rem;
+            font-weight: 800;
+            color: var(--light-green);
+            line-height: 1.1;
+        }
+
+        .hero-remaining-value.negative { color: rgb(var(--bad-rgb)); }
+
+        .hero-remaining-pct {
+            font-size: 0.8rem;
+            color: rgba(var(--fg-rgb), 0.55);
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        @media (max-width: 650px) {
+            .hero-remaining-value { font-size: 1.9rem; }
+        }
+
+        /* 💰 Birikim/yatırım analizi paragrafı */
+        .savings-panel {
+            background: rgba(var(--fg-rgb), 0.02);
+            border: 1px solid rgba(var(--light-green-rgb), 0.2);
+            border-radius: 6px;
+            padding: 14px 16px;
+            margin: 14px 0;
+            font-size: 0.82rem;
+            line-height: 1.6;
+            color: rgba(var(--fg-rgb), 0.8);
+        }
+
+        .savings-panel b { color: var(--light-green); }
+        .savings-panel .savings-note {
+            font-size: 0.68rem;
+            color: rgba(var(--fg-rgb), 0.4);
+            margin-top: 8px;
+            display: block;
         }
 
         .net-remaining {
@@ -409,7 +460,76 @@
         .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
         @media (max-width: 700px) { .compare-grid { grid-template-columns: 1fr; } }
 
-        /* ⭐ Life Score yıldızları */
+        /* 🎲 Tahmin/Quiz Modu */
+        .quiz-score-bar {
+            text-align: center;
+            font-size: 0.85rem;
+            color: rgba(var(--fg-rgb), 0.6);
+            margin-bottom: 18px;
+        }
+
+        .quiz-score-bar b { color: var(--accent-gold); }
+
+        .quiz-question {
+            text-align: center;
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 22px;
+        }
+
+        .quiz-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 650px) {
+            .quiz-options { grid-template-columns: 1fr; }
+        }
+
+        .quiz-option-btn {
+            padding: 24px 16px;
+            border-radius: 8px;
+            border: 2px solid rgba(var(--light-green-rgb), 0.3);
+            background: rgba(var(--fg-rgb), 0.02);
+            color: rgb(var(--fg-rgb));
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .quiz-option-btn:hover:not(:disabled) {
+            border-color: var(--accent-gold);
+            background: rgba(var(--accent-gold-rgb), 0.08);
+        }
+
+        .quiz-option-btn:disabled { cursor: default; opacity: 0.7; }
+        .quiz-option-btn.correct-answer { border-color: var(--light-green); background: rgba(var(--light-green-rgb), 0.15); }
+        .quiz-option-btn.wrong-answer { border-color: rgb(var(--bad-rgb)); }
+
+        .quiz-role-tag {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: rgba(var(--fg-rgb), 0.5);
+            margin-top: 6px;
+        }
+
+        .quiz-result-box {
+            text-align: center;
+            margin-top: 20px;
+            padding: 16px;
+        }
+
+        .quiz-result-values {
+            font-size: 0.85rem;
+            color: rgba(var(--fg-rgb), 0.7);
+            margin: 10px 0;
+            line-height: 1.8;
+        }
         .life-score-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -528,38 +648,139 @@
             <span class="logo-badge">💰</span>
             <span class="logo-text">Net<span class="logo-text-accent">Kalan</span></span>
         </div>
-        <button id="shareBtn" class="header-share-btn">🔗 Paylaş</button>
+        <div style="display:flex; gap:8px;">
+            <button id="quizModeBtn" class="header-share-btn">🎲 Tahmin Modu</button>
+            <button id="shareBtn" class="header-share-btn">🔗 Paylaş</button>
+        </div>
     </div>
 </header>
 
 <div class="container">
     <p class="subtitle">Aynı meslek, farklı ülkeler — kirayı ve gideri çıkarınca elinde ne kalıyor?</p>
-    <div class="role-select-wrap" id="roleSelectWrap">
-        <span class="role-select-label">Meslek Seç</span>
-        <input id="roleSelectInput" class="role-select-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" name="netkalan-role-search" placeholder="Meslek yazın veya listeden seçin..." value="Backend Developer">
-        <div id="roleDropdown" class="role-dropdown"></div>
+    <div id="normalModeWrap">
+        <div class="role-select-wrap" id="roleSelectWrap">
+            <span class="role-select-label">Meslek Seç</span>
+            <input id="roleSelectInput" class="role-select-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" name="netkalan-role-search" placeholder="Meslek yazın veya listeden seçin..." value="Backend Developer">
+            <div id="roleDropdown" class="role-dropdown"></div>
+        </div>
+
+        <div class="controls-row" id="householdRow"></div>
+        <div class="controls-row" id="compareControlRow"></div>
+
+        <div id="countryList" class="country-list">
+            <div class="loading-state">Veriler yükleniyor...</div>
+        </div>
+
+        <div class="disclaimer">
+            <b>⚠️ Veri notu:</b> <b>✓ GERÇEK VERİ</b> etiketli maaşlar Stack Overflow Developer Survey'in
+            resmi ham verisinden hesaplanan gerçek medyandır. <b>Kira ve gider artık WhereNext Cost of
+            Living Index'ten (World Bank ICP 2021 verisine dayanan, gerçek) geliyor</b> — toplam tutar
+            %100 gerçek, kira/diğer-gider ayrımı WhereNext'in kendi alt-endekslerinden orantılı olarak
+            hesaplanıyor. <b>🌍 Enflasyon ve İş Fırsatı yıldızı, World Bank'in resmi verisinden</b>
+            hesaplanıyor. <b>🎓 Okul ücreti</b> (çocuklu hane tiplerinde), New York'taki gerçek
+            uluslararası okul ortalamasının ($43,003/yıl) WhereNext'in gerçek yaşam maliyeti endeksiyle
+            diğer ülkelere ölçeklenmesiyle tahmin ediliyor. Geriye kalan tahmini alanlar: yeterli anket
+            yanıtı olmayan meslek/ülke kombinasyonlarında maaş, ve <b>Doktor/Öğretmen/Avukat gibi
+            tech-olmayan roller</b>. Tüm veriler ayda bir otomatik olarak yenileniyor.
+        </div>
     </div>
 
-    <div class="controls-row" id="householdRow"></div>
-    <div class="controls-row" id="compareControlRow"></div>
-
-    <div id="countryList" class="country-list">
-        <div class="loading-state">Veriler yükleniyor...</div>
-    </div>
-
-    <div class="disclaimer">
-        <b>⚠️ Veri notu:</b> <b>✓ GERÇEK VERİ</b> etiketli maaşlar Stack Overflow Developer Survey'in
-        resmi ham verisinden hesaplanan gerçek medyandır. <b>Kira ve gider artık WhereNext Cost of
-        Living Index'ten (World Bank ICP 2021 verisine dayanan, gerçek) geliyor</b> — toplam tutar
-        %100 gerçek, kira/diğer-gider ayrımı WhereNext'in kendi alt-endekslerinden orantılı olarak
-        hesaplanıyor. <b>🌍 Enflasyon ve İş Fırsatı yıldızı, World Bank'in resmi verisinden</b>
-        hesaplanıyor. Geriye kalan tahmini alanlar: yeterli anket yanıtı olmayan meslek/ülke
-        kombinasyonlarında maaş, ve <b>Doktor/Öğretmen/Avukat gibi tech-olmayan roller</b>. Tüm
-        veriler ayda bir otomatik olarak yenileniyor.
+    <div id="quizModeWrap" style="display:none;">
+        <div class="quiz-score-bar">Skor: <b id="quizScoreText">0/0</b></div>
+        <div id="quizContainer"></div>
     </div>
 </div>
 
 <script>
+    const QUIZ_COUNTRY_CODES = ['US','DE','GB','NL','TR','IN','BR','CA','PL','AU','CH','FR','JP'];
+    let quizScore = 0, quizTotalAttempts = 0, quizModeActive = false;
+
+    function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+    async function startQuizRound() {
+        const container = document.getElementById('quizContainer');
+        container.innerHTML = '<div class="loading-state">Soru hazırlanıyor...</div>';
+
+        const roleA = pickRandom(allRoles).role;
+        let roleB = pickRandom(allRoles).role;
+        const countryA = pickRandom(QUIZ_COUNTRY_CODES);
+        let countryB = pickRandom(QUIZ_COUNTRY_CODES);
+        while (countryB === countryA) countryB = pickRandom(QUIZ_COUNTRY_CODES);
+
+        try {
+            const [dataA, dataB] = await Promise.all([
+                fetch(`/api/countries?role=${encodeURIComponent(roleA)}&household=single`).then(r => r.json()),
+                fetch(`/api/countries?role=${encodeURIComponent(roleB)}&household=single`).then(r => r.json())
+            ]);
+            const entryA = dataA.find(c => c.countryCode === countryA);
+            const entryB = dataB.find(c => c.countryCode === countryB);
+            if (!entryA || !entryB) { container.innerHTML = '<div class="loading-state">Veri bulunamadı, tekrar dene.</div>'; return; }
+            renderQuizRound(entryA, roleA, entryB, roleB);
+        } catch (e) {
+            container.innerHTML = '<div class="loading-state">❌ Soru yüklenemedi.</div>';
+        }
+    }
+
+    function renderQuizRound(entryA, roleA, entryB, roleB) {
+        const container = document.getElementById('quizContainer');
+        container.innerHTML = `
+            <div class="quiz-question">🤔 Hangisinin aylık net kalan tutarı daha yüksek?</div>
+            <div class="quiz-options">
+                <button class="quiz-option-btn" data-side="A">
+                    ${countryFlags[entryA.countryCode] || ''} ${entryA.countryNameTr}
+                    <span class="quiz-role-tag">${roleA}</span>
+                </button>
+                <button class="quiz-option-btn" data-side="B">
+                    ${countryFlags[entryB.countryCode] || ''} ${entryB.countryNameTr}
+                    <span class="quiz-role-tag">${roleB}</span>
+                </button>
+            </div>
+            <div id="quizResultBox"></div>
+        `;
+
+        container.querySelectorAll('.quiz-option-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const chosenIsA = btn.dataset.side === 'A';
+                const chosen = chosenIsA ? entryA : entryB;
+                const other = chosenIsA ? entryB : entryA;
+                const correct = chosen.monthlyNetRemainingUsd >= other.monthlyNetRemainingUsd;
+
+                quizTotalAttempts++;
+                if (correct) quizScore++;
+                document.getElementById('quizScoreText').textContent = `${quizScore}/${quizTotalAttempts}`;
+
+                container.querySelectorAll('.quiz-option-btn').forEach(b => {
+                    b.disabled = true;
+                    const bIsA = b.dataset.side === 'A';
+                    const bEntry = bIsA ? entryA : entryB;
+                    const isHigher = bEntry.monthlyNetRemainingUsd === Math.max(entryA.monthlyNetRemainingUsd, entryB.monthlyNetRemainingUsd);
+                    b.classList.add(isHigher ? 'correct-answer' : 'wrong-answer');
+                });
+
+                document.getElementById('quizResultBox').innerHTML = `
+                    <div class="quiz-result-box">
+                        <div style="font-size:1.3rem;font-weight:800;">${correct ? '✅ Doğru!' : '❌ Yanlış!'}</div>
+                        <div class="quiz-result-values">
+                            ${entryA.countryNameTr} (${roleA}): <b>${formatUsd(entryA.monthlyNetRemainingUsd)}</b>/ay<br>
+                            ${entryB.countryNameTr} (${roleB}): <b>${formatUsd(entryB.monthlyNetRemainingUsd)}</b>/ay
+                        </div>
+                        <button id="quizNextBtn" class="compare-toggle-btn active">Sıradaki Soru →</button>
+                    </div>
+                `;
+                document.getElementById('quizNextBtn').addEventListener('click', startQuizRound);
+            });
+        });
+    }
+
+    function setupQuizModeToggle() {
+        document.getElementById('quizModeBtn').addEventListener('click', () => {
+            quizModeActive = !quizModeActive;
+            document.getElementById('normalModeWrap').style.display = quizModeActive ? 'none' : '';
+            document.getElementById('quizModeWrap').style.display = quizModeActive ? '' : 'none';
+            document.getElementById('quizModeBtn').classList.toggle('active', quizModeActive);
+            if (quizModeActive) startQuizRound();
+        });
+    }
     const countryFlags = {
         'US': '🇺🇸', 'DE': '🇩🇪', 'GB': '🇬🇧', 'NL': '🇳🇱', 'TR': '🇹🇷',
         'IN': '🇮🇳', 'BR': '🇧🇷', 'CA': '🇨🇦', 'PL': '🇵🇱', 'AU': '🇦🇺',
@@ -598,6 +819,138 @@
         if (unemploymentPercent < 8) return 3;
         if (unemploymentPercent < 10) return 2;
         return 1;
+    }
+
+    // 💰 BİRİKİM/YATIRIM ANALİZİ — bu gerçek bir yapay zeka çağrısı DEĞİL, saf
+    // matematik (bileşik faiz formülü) + önceden yazılmış cümle şablonları.
+    // Varsayımlar AÇIKÇA belirtiliyor: %4.5 yıllık nakit faizi (yaklaşık, ülkeye
+    // göre değişir), %8 yıllık ortalama hisse senedi getirisi (uzun vadeli S&P500
+    // tarihsel ortalamasına yakın, garantili değil), %50/%50 karma portföy bu
+    // ikisinin ortalaması. Ev fiyatı tahmini ise kiranın ~18 katı gibi genel bir
+    // "fiyat/kira oranı" kuralına dayanıyor — GERÇEK ev fiyatı verisi değil.
+    const CASH_ANNUAL_RATE = 0.045;
+    const STOCK_ANNUAL_RATE = 0.08;
+    const BLEND_ANNUAL_RATE = (CASH_ANNUAL_RATE + STOCK_ANNUAL_RATE) / 2;
+    const HOME_PRICE_TO_ANNUAL_RENT_RATIO = 18;
+
+    // Aylık düzenli yatırımın N ay sonundaki değeri (bileşik faiz, aylıklaştırılmış oran)
+    function futureValueOfMonthlyDeposit(monthlyAmount, annualRate, months) {
+        const r = annualRate / 12;
+        if (r === 0) return monthlyAmount * months;
+        return monthlyAmount * ((Math.pow(1 + r, months) - 1) / r);
+    }
+
+    // Belirli bir hedef tutara kaç ayda ulaşılacağını hesaplıyor (yoksa null)
+    function monthsToReachTarget(monthlyAmount, annualRate, target) {
+        if (monthlyAmount <= 0) return null;
+        const r = annualRate / 12;
+        if (r === 0) return Math.ceil(target / monthlyAmount);
+        const months = Math.log(1 + (target * r) / monthlyAmount) / Math.log(1 + r);
+        return Math.ceil(months);
+    }
+
+    function formatYearsMonths(months) {
+        if (months === null || !isFinite(months)) return null;
+        const years = Math.floor(months / 12);
+        const rem = Math.round(months % 12);
+        if (years === 0) return `${rem} ay`;
+        if (rem === 0) return `${years} yıl`;
+        return `${years} yıl ${rem} ay`;
+    }
+
+    function buildSavingsPanelHtml(d, c) {
+        const monthly = d.remaining;
+
+        if (monthly <= 0) {
+            return `
+                <div class="savings-panel">
+                    Bu koşullarda (seçili şehir/hane tipiyle) aylık net kalan tutar <b>negatif ya da sıfır</b> —
+                    yani gelir, kira ve giderleri karşılamaya yetmiyor görünüyor. Birikim/yatırım projeksiyonu
+                    bu durumda anlamlı olmuyor. Farklı bir şehir ya da hane tipi seçerek tekrar dener misin?
+                    <span class="savings-note">Bu bölüm yapay zeka değil, matematiksel bir hesaplamadır (bkz. altta metodoloji).</span>
+                </div>
+            `;
+        }
+
+        const fiveYearCash = futureValueOfMonthlyDeposit(monthly, CASH_ANNUAL_RATE, 60);
+        const fiveYearBlend = futureValueOfMonthlyDeposit(monthly, BLEND_ANNUAL_RATE, 60);
+        const tenYearCash = futureValueOfMonthlyDeposit(monthly, CASH_ANNUAL_RATE, 120);
+        const tenYearBlend = futureValueOfMonthlyDeposit(monthly, BLEND_ANNUAL_RATE, 120);
+
+        const monthsToMillion = monthsToReachTarget(monthly, BLEND_ANNUAL_RATE, 1000000);
+        const millionText = monthsToMillion
+            ? `Bu tempoyla (%50 nakit / %50 hisse karma portföyle) <b>1 milyon dolara ulaşman yaklaşık ${formatYearsMonths(monthsToMillion)}</b> sürer.`
+            : `1 milyon dolar hedefi bu tempoyla çok uzun sürer, hesaplanamayacak kadar uzak.`;
+
+        const cityRentMonthly = d.rent;
+        const estimatedHomePrice = cityRentMonthly * 12 * HOME_PRICE_TO_ANNUAL_RENT_RATIO;
+        const monthsToHome = monthsToReachTarget(monthly, BLEND_ANNUAL_RATE, estimatedHomePrice);
+        const homeText = monthsToHome
+            ? `Seçili şehirdeki ortalama bir ev fiyatını (kabaca <b>${formatUsd(estimatedHomePrice)}</b>, kiranın ~18 katı varsayımıyla TAHMİNİ) biriktirmen yaklaşık <b>${formatYearsMonths(monthsToHome)}</b> sürer.`
+            : `Seçili şehirdeki ortalama ev fiyatına bu tempoyla ulaşmak çok uzun sürer.`;
+
+        return `
+            <div class="savings-panel">
+                Aylık <b>${formatUsd(monthly)}</b> biriktirebildiğini varsayarsak:
+                <br>• Sadece nakit faiziyle (~%4.5/yıl) <b>5 yılda ${formatUsd(fiveYearCash)}</b>, <b>10 yılda ${formatUsd(tenYearCash)}</b> birikir.
+                <br>• %50 nakit / %50 hisse senedi karma portföyle (~%${(BLEND_ANNUAL_RATE*100).toFixed(1)}/yıl ortalama) <b>5 yılda ${formatUsd(fiveYearBlend)}</b>, <b>10 yılda ${formatUsd(tenYearBlend)}</b> birikir.
+                <br>• ${millionText}
+                <br>• ${homeText}
+                <span class="savings-note">
+                    ⚠️ Bu bir yapay zeka analizi değil, sabit varsayımlara (yıllık %4.5 nakit faizi, %8 hisse senedi
+                    getirisi — geçmiş performans, garanti değil) dayanan matematiksel bir projeksiyondur. Ev fiyatı
+                    ayrıca kiranın 18 katı gibi genel bir kural varsayımı olup gerçek emlak verisi değildir.
+                </span>
+            </div>
+        `;
+    }
+
+    // 🆚 İki ülke seçiliyken otomatik karşılaştırma paragrafı — yine kural tabanlı,
+    // yapay zeka değil, ama sayılara dayalı gerçek bir kıyaslama metni üretiyor.
+    function buildCompareAnalysisHtml(countryA, countryB) {
+        const cityIdxA = selectedCityIdxByCountry[countryA.countryCode] || 0;
+        const cityIdxB = selectedCityIdxByCountry[countryB.countryCode] || 0;
+        const dA = computeDisplay(countryA, cityIdxA);
+        const dB = computeDisplay(countryB, cityIdxB);
+
+        const winner = dA.remaining >= dB.remaining ? countryA : countryB;
+        const loser = dA.remaining >= dB.remaining ? countryB : countryA;
+        const winnerD = dA.remaining >= dB.remaining ? dA : dB;
+        const loserD = dA.remaining >= dB.remaining ? dB : dA;
+        const diff = winnerD.remaining - loserD.remaining;
+        const diffPct = loserD.remaining !== 0 ? Math.abs((diff / Math.abs(loserD.remaining)) * 100) : 0;
+
+        const taxWinner = countryA.taxWedgePercent <= countryB.taxWedgePercent ? countryA : countryB;
+        const taxLoser = taxWinner === countryA ? countryB : countryA;
+
+        const monthsA = monthsToReachTarget(dA.remaining, BLEND_ANNUAL_RATE, 1000000);
+        const monthsB = monthsToReachTarget(dB.remaining, BLEND_ANNUAL_RATE, 1000000);
+
+        let millionCompareText = '';
+        if (monthsA && monthsB) {
+            const fasterCountry = monthsA <= monthsB ? countryA : countryB;
+            const fasterMonths = Math.min(monthsA, monthsB);
+            millionCompareText = `1 milyon dolar birikimine <b>${fasterCountry.countryNameTr}</b>'de (yaklaşık ${formatYearsMonths(fasterMonths)}) diğerine göre daha hızlı ulaşılıyor.`;
+        } else if (monthsA || monthsB) {
+            const onlyCountry = monthsA ? countryA : countryB;
+            millionCompareText = `1 milyon dolar birikimine sadece <b>${onlyCountry.countryNameTr}</b>'de gerçekçi bir sürede ulaşılabiliyor, diğerinde mevcut net kalan tutar bunu çok zorlaştırıyor.`;
+        }
+
+        return `
+            <div class="savings-panel" style="max-width: 900px; margin: 20px auto; font-size: 0.9rem;">
+                <b>🔍 Karşılaştırma Analizi — ${countryA.countryNameTr} vs ${countryB.countryNameTr}</b><br><br>
+                Aylık net kalan tutar açısından <b>${winner.countryNameTr}</b> önde — ${loser.countryNameTr}'e göre
+                yaklaşık <b>${formatUsd(diff)} daha fazla (%${diffPct.toFixed(0)} civarı)</b> elde kalıyor.
+                Vergi yükü açısından <b>${taxWinner.countryNameTr}</b> daha avantajlı (%${taxWinner.taxWedgePercent.toFixed(1)}
+                vergi kaması), ${taxLoser.countryNameTr}'de bu oran %${taxLoser.taxWedgePercent.toFixed(1)}.
+                ${millionCompareText}
+                <br><br>
+                Özetle: yüksek brüt maaş tek başına yeterli değil — vergi ve yaşam maliyeti dengesini de
+                hesaba katınca tablo değişebiliyor. Kişisel önceliklerine (kariyer fırsatları, kültürel uyum,
+                aile durumu gibi sayısal olmayan faktörler) göre bu analiz sadece bir başlangıç noktası olmalı.
+                <span class="savings-note">Bu metin yapay zeka tarafından değil, sabit kural şablonlarıyla otomatik üretilmiştir.</span>
+            </div>
+        `;
     }
 
     function buildLifeScoreHtml(d, c) {
@@ -707,17 +1060,15 @@
 
         return `
             ${compareRowHtml}
-            <div class="country-card-top">
-                <div class="country-name-row">
-                    <span class="country-rank">${idx + 1}</span>
-                    <span class="country-flag">${countryFlags[c.countryCode] || ''}</span>
-                    <span class="country-name">${c.countryNameTr}</span>
-                </div>
-                <div class="net-remaining-box">
-                    <span class="net-remaining-label">Aylık Net Kalan</span>
-                    <span class="net-remaining ${d.remaining < 0 ? 'negative' : ''}">${formatUsd(d.remaining)}</span>
-                    <span class="net-remaining-pct">brüt maaşın ${pctSign}%${Math.abs(d.remainingPctOfGross).toFixed(0)}'i</span>
-                </div>
+            <div class="country-name-row" style="justify-content:center; margin-bottom: 4px;">
+                <span class="country-rank">${idx + 1}</span>
+                <span class="country-flag">${countryFlags[c.countryCode] || ''}</span>
+                <span class="country-name">${c.countryNameTr}</span>
+            </div>
+            <div class="hero-remaining-wrap">
+                <div class="hero-remaining-label">Aylık Net Kalan</div>
+                <div class="hero-remaining-value ${d.remaining < 0 ? 'negative' : ''}">${formatUsd(d.remaining)}</div>
+                <div class="hero-remaining-pct">brüt maaşın ${pctSign}%${Math.abs(d.remainingPctOfGross).toFixed(0)}'i</div>
             </div>
             <div class="city-chip-row">${cityChipsHtml}</div>
             <div class="breakdown-bar">
@@ -753,6 +1104,7 @@
                 </div>
             </div>
             ${buildLifeScoreHtml(d, c)}
+            ${buildSavingsPanelHtml(d, c)}
             <div class="source-line">
                 ${salaryBadge}${costBadge}📊 ${c.salarySource} · 🏠 ${c.costSource} · Son güncelleme: ${c.lastUpdated}
             </div>
@@ -784,6 +1136,17 @@
             card.innerHTML = buildCardHtml(c, idx, maxGrossMonthly);
             list.appendChild(card);
         });
+
+        // 🔍 2 ülke karşılaştırılıyorsa, listenin altına otomatik analiz paragrafını ekle
+        const existingAnalysis = document.getElementById('compareAnalysisBox');
+        if (existingAnalysis) existingAnalysis.remove();
+
+        if (compareActive && displayCountries.length === 2) {
+            const analysisDiv = document.createElement('div');
+            analysisDiv.id = 'compareAnalysisBox';
+            analysisDiv.innerHTML = buildCompareAnalysisHtml(displayCountries[0], displayCountries[1]);
+            list.parentElement.insertBefore(analysisDiv, list.nextSibling);
+        }
     }
 
     function renderCompareControls() {
@@ -1017,6 +1380,7 @@
         renderCompareControls();
         setupShareButton();
         setupCityChipDelegation();
+        setupQuizModeToggle();
         await loadCountries();
     }
 

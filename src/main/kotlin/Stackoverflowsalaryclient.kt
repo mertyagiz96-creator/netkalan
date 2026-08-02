@@ -45,21 +45,34 @@ object StackOverflowSalaryClient {
         "Japan" to "JP"
     )
 
-    // 💻 SO'nun "DevType" (çoklu seçim, noktalı virgülle ayrılmış metin) alanını
-    // bizim rol isimlerimize eşliyoruz. Bir katılımcı birden fazla role sayılabilir
-    // (örn. hem backend hem full-stack işaretlemiş olabilir) — bu normal ve doğru.
-    private val devTypeToRole = linkedMapOf(
-        "Developer, back-end" to "Backend Developer",
-        "Developer, front-end" to "Frontend Developer",
-        "Developer, full-stack" to "Full-Stack Developer",
-        "Developer, mobile" to "Mobile Developer",
-        "DevOps specialist" to "DevOps Engineer",
-        "Cloud infrastructure engineer" to "Cloud Engineer",
-        "Data engineer" to "Data Engineer",
-        "Data scientist or machine learning specialist" to "Data Scientist / ML Engineer",
-        "Security professional" to "Security Professional",
-        "Engineering manager" to "Engineering Manager"
+    // 💻 SO'nun "DevType" (çoklu seçim, noktalı virgülle ayrılmış metin) alanındaki
+    // metinleri bizim rol isimlerimize eşliyoruz. BİREBİR string eşleşmesi yerine
+    // ANAHTAR KELİME içeriyor mu diye bakıyoruz — çünkü anket yıldan yıla ifadeleri
+    // hafifçe değiştirebiliyor (örn. "DevOps specialist" → "DevOps Engineer" gibi),
+    // tam eşleşme bunu kaçırıyordu (DevOps/Security 0 yanıt buluyordu).
+    private val roleKeywords = listOf(
+        "back-end" to "Backend Developer",
+        "front-end" to "Frontend Developer",
+        "full-stack" to "Full-Stack Developer",
+        "mobile" to "Mobile Developer",
+        "devops" to "DevOps Engineer",
+        "dev ops" to "DevOps Engineer",
+        "cloud infrastructure" to "Cloud Engineer",
+        "data engineer" to "Data Engineer",
+        "engineer, data" to "Data Engineer",
+        "machine learning" to "Data Scientist / ML Engineer",
+        "data scientist" to "Data Scientist / ML Engineer",
+        "security" to "Security Professional",
+        "engineering manager" to "Engineering Manager"
     )
+
+    private fun matchRoleFromDevType(devType: String): String? {
+        val lower = devType.lowercase()
+        for ((keyword, role) in roleKeywords) {
+            if (lower.contains(keyword)) return role
+        }
+        return null
+    }
 
     // Dönen map key formatı: "US|Backend Developer"
     suspend fun computeRealSalaries(): Map<String, RealSalary> {
@@ -80,7 +93,7 @@ object StackOverflowSalaryClient {
                         if (comp < 5000 || comp > 2_000_000) continue // 🧹 uç/hatalı veriyi ele
 
                         for (dt in devTypeRaw.split(";").map { it.trim() }) {
-                            val role = devTypeToRole[dt] ?: continue
+                            val role = matchRoleFromDevType(dt) ?: continue
                             salaryLists.getOrPut("$country|$role") { mutableListOf() }.add(comp)
                         }
                     }
