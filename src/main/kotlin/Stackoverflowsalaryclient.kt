@@ -59,7 +59,10 @@ object StackOverflowSalaryClient {
         "Australia" to "AU",
         "Switzerland" to "CH",
         "France" to "FR",
-        "Japan" to "JP"
+        "Japan" to "JP",
+        "United Arab Emirates" to "AE",
+        "China" to "CN",
+        "Russian Federation" to "RU", "Russia" to "RU"
     )
 
     // 💻 SO'nun "DevType" (çoklu seçim, noktalı virgülle ayrılmış metin) alanındaki

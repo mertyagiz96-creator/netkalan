@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
 // 🌍 Şu an desteklenen tüm ülke kodları — World Bank verisi bunlar için çekiliyor.
-private val SUPPORTED_COUNTRY_CODES = listOf("US", "DE", "GB", "NL", "TR", "IN", "BR", "CA", "PL", "AU", "CH", "FR", "JP")
+private val SUPPORTED_COUNTRY_CODES = listOf("US", "DE", "GB", "NL", "TR", "IN", "BR", "CA", "PL", "AU", "CH", "FR", "JP", "AE", "CN", "RU")
 
 // 🔄 Üç veri kaynağı (World Bank, Stack Overflow, WhereNext) artık BİRBİRİNDEN
 // BAĞIMSIZ 3 AYRI döngüde çalışıyor — biri ağ seviyesinde takılıp kalsa bile

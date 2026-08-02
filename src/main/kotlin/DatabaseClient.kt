@@ -56,7 +56,7 @@ object DatabaseClient {
     // yeni ülke, yeni kolon vb.) elle 1 artırıyoruz. Uygulama açılışta bu sayıyı
     // veritabanındaki kayıtlı değerle karşılaştırıyor; uyuşmazsa netkalan.db'yi
     // ELLE SİLMEYE GEREK KALMADAN kendi kendine sıfırlayıp yeniden seed ediyor.
-    private const val SCHEMA_VERSION = 4
+    private const val SCHEMA_VERSION = 7
 
     // 🌍 World Bank'ten arka planda çekilen GERÇEK işsizlik/enflasyon verisi burada
     // önbelleğe alınıyor (Application.kt başlangıçta doldurup güncelliyor).
@@ -87,7 +87,10 @@ object DatabaseClient {
         "AU" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("Sidney", 1.3, 1.15), CityOption("Adelaide", 0.8, 0.9), CityOption("Melbourne", 1.15, 1.05)),
         "CH" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("Zürih", 1.3, 1.15), CityOption("Cenevre", 1.25, 1.1), CityOption("Bern", 0.9, 0.95)),
         "FR" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("Paris", 1.5, 1.2), CityOption("Lyon", 0.85, 0.9), CityOption("Marsilya", 0.75, 0.85)),
-        "JP" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("Tokyo", 1.3, 1.15), CityOption("Osaka", 0.85, 0.9), CityOption("Yokohama", 1.1, 1.0))
+        "JP" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("Tokyo", 1.3, 1.15), CityOption("Osaka", 0.85, 0.9), CityOption("Yokohama", 1.1, 1.0)),
+        "AE" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("Dubai", 1.4, 1.2), CityOption("Abu Dabi", 1.1, 1.0)),
+        "CN" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("Şangay", 1.5, 1.2), CityOption("Pekin", 1.4, 1.15), CityOption("Shenzhen", 1.35, 1.1)),
+        "RU" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("Moskova", 1.6, 1.3), CityOption("St. Petersburg", 1.2, 1.1))
     )
 
     // 👪 Hane tipi ayarları — vergi kaması deltası (yüzde puan, OECD Taxing Wages'in
@@ -129,23 +132,51 @@ object DatabaseClient {
     private val nationalAvgWageUsd = mapOf(
         "US" to 65000.0, "DE" to 58000.0, "GB" to 48000.0, "NL" to 64000.0,
         "TR" to 15000.0, "IN" to 3000.0, "BR" to 10000.0, "CA" to 59000.0,
-        "PL" to 24000.0, "AU" to 62000.0, "CH" to 95000.0, "FR" to 40000.0, "JP" to 35000.0
+        "PL" to 24000.0, "AU" to 62000.0, "CH" to 95000.0, "FR" to 40000.0, "JP" to 35000.0,
+        "AE" to 40000.0, "CN" to 18000.0, "RU" to 12000.0
     )
 
     // 👔 Tech-olmayan meslekler için, dünya genelinde tipik olarak ulusal ortalama
     // ücrete göre kaç kat kazandıklarına dair KABA uluslararası genel bilgi.
     // Bu, tech rol çarpanlarından (Stack Overflow kaynaklı) daha az güvenilir —
     // ülkeye özel resmi veri değil, genel gözlem/tahmin.
+    // 👔 Tech-olmayan meslekler için ulusal ortalamaya göre çarpan — ABD Bureau
+    // of Labor Statistics (BLS) resmi maaş verisiyle çapraz kontrol edilip
+    // düzeltildi (2026-08). Örn. Doktor: BLS $238,380 / ulusal ortalama $65,000
+    // = 3.67x. Bu ABD'ye özel oranı diğer ülkelere de uyguluyoruz — meslekler
+    // arası GÖRECELİ farkın ülkeden ülkeye kabaca benzer kaldığı varsayımıyla
+    // (yine de tam kesin değil, ülkeye özel resmi veri değil).
     private val nonTechRoleMultipliers = linkedMapOf(
-        "Doktor" to 2.5,
-        "Hemşire" to 1.1,
-        "Öğretmen" to 0.9,
-        "Avukat" to 1.8,
-        "Muhasebeci / Finans Uzmanı" to 1.2,
-        "Pazarlama Yöneticisi" to 1.4,
-        "İnşaat Mühendisi" to 1.15,
-        "Mimar" to 1.2,
-        "Perakende / Hizmet Çalışanı" to 0.65
+        "Doktor" to 3.67,
+        "Hemşire" to 1.44,
+        "Öğretmen" to 0.95,
+        "Avukat" to 2.09,
+        "Muhasebeci / Finans Uzmanı" to 1.23,
+        "Pazarlama Yöneticisi" to 2.15,
+        "İnşaat Mühendisi" to 1.48,
+        "Mimar" to 1.44,
+        "Perakende / Hizmet Çalışanı" to 0.54,
+        "Makine Mühendisi" to 1.35
+    )
+
+    // 🔧 Makine Mühendisi için GERÇEK, ERI SalaryExpert'ten (consultancy-grade
+    // maaş anketi) tek tek doğrulanmış yıllık brüt maaşlar (USD). Kanada ve
+    // İsviçre için ikincil bir kaynaktan (instarem.com), biraz daha az kesin.
+    // Avustralya, Fransa, Çin, Rusya için gerçek veri bulunamadı — onlar hâlâ
+    // tahmini (ulusal ortalama × meslek çarpanı) yöntemiyle hesaplanıyor.
+    private val realMechanicalEngineerSalaryUsd = mapOf(
+        "US" to 115437.0,
+        "DE" to 92666.0,
+        "GB" to 82725.0,
+        "NL" to 85126.0,
+        "TR" to 27038.0,
+        "PL" to 47700.0,
+        "JP" to 58115.0,
+        "AE" to 76157.0,
+        "IN" to 18077.0,
+        "BR" to 30881.0,
+        "CA" to 74160.0,
+        "CH" to 93225.0
     )
 
     // 🌍 Türkçe/İngilizce ikili arama için — tech roller zaten İngilizce, sadece
@@ -159,7 +190,8 @@ object DatabaseClient {
         "Pazarlama Yöneticisi" to "Marketing Manager",
         "İnşaat Mühendisi" to "Civil Engineer",
         "Mimar" to "Architect",
-        "Perakende / Hizmet Çalışanı" to "Retail / Service Worker"
+        "Perakende / Hizmet Çalışanı" to "Retail / Service Worker",
+        "Makine Mühendisi" to "Mechanical Engineer"
     )
 
     private const val POOL_SIZE = 4
@@ -283,6 +315,12 @@ object DatabaseClient {
                 "Stack Overflow Dev Survey 2025 (yaklaşık)", "Genel piyasa gözlemi (yaklaşık)", "2026-08"),
             SeedRow("JP", "Japonya", 70000.0, 32.0, 1300.0, 1000.0,
                 "Stack Overflow Dev Survey 2025 (yaklaşık)", "Genel piyasa gözlemi (yaklaşık)", "2026-08"),
+            SeedRow("AE", "Birleşik Arap Emirlikleri", 120000.0, 0.0, 1800.0, 1200.0,
+                "Genel piyasa gözlemi (yaklaşık, gelir vergisi %0 resmi/kesin)", "Genel piyasa gözlemi (yaklaşık)", "2026-08"),
+            SeedRow("CN", "Çin", 45000.0, 25.0, 700.0, 500.0,
+                "Genel piyasa gözlemi (yaklaşık)", "Genel piyasa gözlemi (yaklaşık)", "2026-08"),
+            SeedRow("RU", "Rusya", 19000.0, 13.0, 500.0, 400.0,
+                "Genel piyasa gözlemi (yaklaşık, vergi oranı %13 sabit/resmi)", "Genel piyasa gözlemi (yaklaşık, veri güncelliği kısıtlı olabilir)", "2026-08"),
         )
 
         val insertSql = """
@@ -306,10 +344,17 @@ object DatabaseClient {
 
                 // 👔 Tech-olmayan roller — ülkenin ortalama ücretine göre ölçekleniyor,
                 // daha kaba bir tahmin olduğu kaynak metninde açıkça belirtiliyor.
+                // İSTİSNA: Makine Mühendisi için 12 ülkede ERI SalaryExpert'ten
+                // GERÇEK maaş verisi varsa, tahmini formül yerine o kullanılıyor.
                 val avgWage = nationalAvgWageUsd[row.code] ?: row.gross * 0.5
                 for ((role, multiplier) in nonTechRoleMultipliers) {
-                    val scaledGross = avgWage * multiplier
-                    val salarySrc = "Ülke ortalama ücreti × genel meslek oranı (KABA TAHMİN, ülkeye özel veri değil)"
+                    val realOverride = if (role == "Makine Mühendisi") realMechanicalEngineerSalaryUsd[row.code] else null
+                    val scaledGross = realOverride ?: (avgWage * multiplier)
+                    val salarySrc = if (realOverride != null) {
+                        "ERI SalaryExpert 2026 — GERÇEK (profesyonel maaş anketi verisi)"
+                    } else {
+                        "Ülke ortalama ücreti × BLS-türetilmiş meslek oranı (ABD verisine dayalı tahmin, ülkeye özel veri değil)"
+                    }
                     insertRow(stmt, row, role, scaledGross, salarySrc)
                 }
             }
@@ -476,7 +521,8 @@ object DatabaseClient {
         "US" to "Amerika Birleşik Devletleri", "DE" to "Almanya", "GB" to "İngiltere",
         "NL" to "Hollanda", "TR" to "Türkiye", "IN" to "Hindistan", "BR" to "Brezilya",
         "CA" to "Kanada", "PL" to "Polonya", "AU" to "Avustralya", "CH" to "İsviçre",
-        "FR" to "Fransa", "JP" to "Japonya"
+        "FR" to "Fransa", "JP" to "Japonya", "AE" to "Birleşik Arap Emirlikleri",
+        "CN" to "Çin", "RU" to "Rusya"
     )
 
     fun fetchCarModels(): List<CarModelInfo> = carModelsList.map { CarModelInfo(it.name, it.category) }

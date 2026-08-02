@@ -541,6 +541,86 @@
         .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
         @media (max-width: 700px) { .compare-grid { grid-template-columns: 1fr; } }
 
+        .icon-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 1px solid rgba(var(--fg-rgb), 0.2);
+            background: transparent;
+            color: rgba(var(--fg-rgb), 0.75);
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .icon-btn:hover { border-color: rgba(var(--fg-rgb), 0.45); color: rgb(var(--fg-rgb)); }
+
+        .settings-panel-wrap { position: relative; }
+
+        .settings-panel {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            margin-top: 8px;
+            background: rgb(var(--surface-strong-rgb));
+            border: 1px solid rgba(var(--light-green-rgb), 0.35);
+            border-radius: 6px;
+            padding: 10px;
+            min-width: 160px;
+            z-index: 200;
+            box-shadow: 0 16px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .settings-panel.open { display: block; }
+
+        .settings-panel-item {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 3px;
+            border: none;
+            background: transparent;
+            color: rgb(var(--fg-rgb));
+            font-size: 0.82rem;
+            font-weight: 600;
+            text-align: left;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .settings-panel-item:hover { background: rgba(var(--light-green-rgb), 0.12); }
+
+        #householdRow .household-btn, #experienceRow .household-btn, #sortToggleRowInPanel .household-btn {
+            flex: none;
+            width: 100%;
+            text-align: left;
+        }
+
+        .sort-toggle-row {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        .sort-toggle-btn {
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid rgba(var(--fg-rgb), 0.18);
+            background: transparent;
+            color: rgba(var(--fg-rgb), 0.75);
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .sort-toggle-btn:hover { border-color: var(--accent-gold); color: var(--accent-gold); }
+
         .country-search-wrap {
             max-width: 420px;
             margin: 0 auto 20px auto;
@@ -784,13 +864,18 @@
         <div class="logo-group">
             <span class="logo-badge">💰</span>
             <span class="logo-text">Net<span class="logo-text-accent">Kalan</span></span>
+            <div class="settings-panel-wrap" id="settingsMenuWrap">
+                <button id="settingsMenuBtn" class="icon-btn" title="Ayarlar">⚙️</button>
+                <div id="settingsMenuPanel" class="settings-panel">
+                    <button id="shareBtn" class="settings-panel-item">🔗 Paylaş</button>
+                </div>
+            </div>
         </div>
         <div style="display:flex; gap:8px; flex-wrap: wrap; justify-content: flex-end;">
-            <button id="shareBtn" class="header-share-btn">🔗 Paylaş</button>
             <button id="quizModeBtn" class="header-share-btn">🎲 Tahmin Modu</button>
             <button id="carModeBtn" class="header-share-btn">🚗 Araç Fiyatları</button>
-            <button id="quizBackToMenuBtn" class="header-share-btn" style="display:none;">🏠 Ana Menüye Dön</button>
-            <button id="carBackToMenuBtn" class="header-share-btn" style="display:none;">🏠 Ana Menüye Dön</button>
+            <button id="quizBackToMenuBtn" class="header-share-btn" style="display:none;">🏠 Ana Menü</button>
+            <button id="carBackToMenuBtn" class="header-share-btn" style="display:none;">🏠 Ana Menü</button>
         </div>
     </div>
 </header>
@@ -804,8 +889,22 @@
             <div id="roleDropdown" class="role-dropdown"></div>
         </div>
 
-        <div class="controls-row" id="householdRow"></div>
-        <div class="controls-row" id="experienceRow"></div>
+        <div class="sort-toggle-row" style="position: relative;">
+            <div class="settings-panel-wrap" id="filtersMenuWrap">
+                <button id="filtersMenuBtn" class="sort-toggle-btn">🔧 Filtreler & Sıralama</button>
+                <div id="filtersMenuPanel" class="settings-panel" style="left: 50%; transform: translateX(-50%); min-width: 280px;">
+                    <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:1px; color:rgba(var(--fg-rgb),0.45); margin: 4px 0 6px 4px;">Sıralama (Net Kalan)</div>
+                    <div id="sortToggleRowInPanel" style="display:flex; flex-direction:column; gap:4px; margin-bottom: 10px;">
+                        <button class="household-btn active" data-dir="desc">🔽 Çoktan Aza</button>
+                        <button class="household-btn" data-dir="asc">🔼 Azdan Çoğa</button>
+                    </div>
+                    <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:1px; color:rgba(var(--fg-rgb),0.45); margin: 4px 0 6px 4px;">Medeni Durum</div>
+                    <div id="householdRow" style="display:flex; flex-direction:column; gap:4px; margin-bottom: 10px;"></div>
+                    <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:1px; color:rgba(var(--fg-rgb),0.45); margin: 4px 0 6px 4px;">Deneyim</div>
+                    <div id="experienceRow" style="display:flex; flex-direction:column; gap:4px;"></div>
+                </div>
+            </div>
+        </div>
 
         <div class="country-search-wrap">
             <input id="countrySearchInput" class="country-search-input" type="text" autocomplete="off" placeholder="🔍 Ülke ara ya da listeden seç...">
@@ -838,7 +937,7 @@
     </div>
 
     <div id="carModeWrap" style="display:none;">
-        <p class="subtitle">Bir model seç, 6 ülkedeki gerçek/tahmini fiyatını gör</p>
+        <p class="subtitle">Bir model seç, fiyatlarını ülke ülke karşılaştır</p>
         <div class="role-select-wrap" id="carModelSelectWrap">
             <span class="role-select-label">Araç Modeli Seç</span>
             <input id="carModelSelectInput" class="role-select-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Marka veya model yazın...">
@@ -850,20 +949,14 @@
         </div>
         <div id="carPriceResults" class="country-list"></div>
         <div class="disclaimer">
-            <b>⚠️ Veri notu:</b> Bu listede sadece <b>gerçek fiyatını bildiğimiz 6 ülke</b> gösteriliyor
-            (ABD, Almanya, Türkiye, Kanada, İsviçre, Fransa — Audi A3'ün resmi üretici fiyatlarından).
-            Diğer 7 ülke için (İngiltere, Hollanda, Hindistan, Brezilya, Polonya, Avustralya, Japonya)
-            önceden yaşam maliyeti endeksiyle bir tahmin yapıyorduk, ama bunun arabalar için (ithal/
-            üretilmiş mal oldukları için yerel yaşam maliyetiyle ilgisi olmadığından) yanlış sonuçlar
-            verdiğini fark ettik — o yüzden artık yanlış tahmin göstermek yerine hiç göstermiyoruz.
-            Diğer modeller (Corolla, Golf vb.) için ABD fiyatı gerçek, diğer 5 ülke Audi'nin gerçek
-            fiyat oranından türetilmiş tahmindir.
+            <b>⚠️ Veri notu:</b> Fiyatlar yaklaşık/yönlendiricidir, kesin bayi fiyatı değildir.
+            13 ülkenin sadece bir kısmı gösteriliyor — güvenilir veri bulamadığımız ülkeler listede yer almıyor.
         </div>
     </div>
 </div>
 
 <script>
-    const QUIZ_COUNTRY_CODES = ['US','DE','GB','NL','TR','IN','BR','CA','PL','AU','CH','FR','JP'];
+    const QUIZ_COUNTRY_CODES = ['US','DE','GB','NL','TR','IN','BR','CA','PL','AU','CH','FR','JP','AE','CN','RU'];
     let quizScore = 0, quizTotalAttempts = 0, quizModeActive = false;
 
     function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
@@ -1004,7 +1097,7 @@
     const countryFlags = {
         'US': '🇺🇸', 'DE': '🇩🇪', 'GB': '🇬🇧', 'NL': '🇳🇱', 'TR': '🇹🇷',
         'IN': '🇮🇳', 'BR': '🇧🇷', 'CA': '🇨🇦', 'PL': '🇵🇱', 'AU': '🇦🇺',
-        'CH': '🇨🇭', 'FR': '🇫🇷', 'JP': '🇯🇵'
+        'CH': '🇨🇭', 'FR': '🇫🇷', 'JP': '🇯🇵', 'AE': '🇦🇪', 'CN': '🇨🇳', 'RU': '🇷🇺'
     };
 
     // ⭐ Life Score — SADECE elimizde gerçek veri olan iki kategori hesaplanıyor
@@ -1231,14 +1324,11 @@
         let carHtml = '';
         if (c.audiA3PriceUsd) {
             const monthsToCar = Math.ceil(c.audiA3PriceUsd / monthly);
-            const carBadge = c.audiA3PriceIsReal
-                ? '<span style="color:var(--light-green);font-size:0.7rem;font-weight:700;">✓ GERÇEK FİYAT</span>'
-                : '<span style="color:rgba(var(--fg-rgb),0.4);font-size:0.7rem;">(tahmini, Almanya fiyatından ölçeklenmiş)</span>';
             carHtml = `
                 <div class="home-goal-card" style="background: rgba(var(--accent-gold-rgb), 0.08); border-color: rgba(var(--accent-gold-rgb), 0.3);">
                     <div class="home-goal-icon">🚗</div>
                     <div class="home-goal-text">
-                        Standart bir <b>Audi A3</b>'ü (bu ülkede yaklaşık <b>${formatUsd(c.audiA3PriceUsd)}</b>) ${carBadge}
+                        Standart bir <b>Audi A3</b>'ü (bu ülkede yaklaşık <b>${formatUsd(c.audiA3PriceUsd)}</b>)
                         biriktirmen yaklaşık <b>${formatYearsMonths(monthsToCar)}</b> sürer.
                     </div>
                 </div>
@@ -1607,7 +1697,6 @@
                     </div>
                     <div class="net-remaining-box">
                         <span class="net-remaining" style="font-size:1.3rem;">${formatUsd(p.priceUsd)}</span>
-                        ${p.isReal ? '<span class="net-remaining-pct" style="color:var(--light-green);font-weight:700;">✓ GERÇEK</span>' : ''}
                     </div>
                 </div>
             </div>
@@ -1689,6 +1778,62 @@
         document.getElementById('carBackToMenuBtn').addEventListener('click', exitCarMode);
     }
 
+    function setupSettingsMenu() {
+        const btn = document.getElementById('settingsMenuBtn');
+        const panel = document.getElementById('settingsMenuPanel');
+
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            panel.classList.toggle('open');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#settingsMenuWrap')) {
+                panel.classList.remove('open');
+            }
+        });
+
+        // Paylaş'a basınca menü kapansın
+        document.getElementById('shareBtn').addEventListener('click', () => {
+            panel.classList.remove('open');
+        });
+    }
+
+    function setupFiltersMenu() {
+        const btn = document.getElementById('filtersMenuBtn');
+        const panel = document.getElementById('filtersMenuPanel');
+
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            panel.classList.toggle('open');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#filtersMenuWrap')) {
+                panel.classList.remove('open');
+            }
+        });
+    }
+
+    function closeFiltersMenu() {
+        document.getElementById('filtersMenuPanel').classList.remove('open');
+    }
+
+    let currentSortDirection = 'desc'; // 🔽 varsayılan: çoktan aza
+
+    function setupSortToggle() {
+        const row = document.getElementById('sortToggleRowInPanel');
+        row.querySelectorAll('.household-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentSortDirection = btn.dataset.dir;
+                row.querySelectorAll('.household-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                renderCountries(lastCountries);
+                closeFiltersMenu();
+            });
+        });
+    }
+
     let currentCountrySearch = '';
 
     function setupCountrySearch() {
@@ -1755,7 +1900,14 @@
             ? countries.filter(c => compareSelected.includes(c.countryCode))
             : (currentCountrySearch
                 ? countries.filter(c => c.countryNameTr.toLocaleLowerCase('tr-TR').includes(currentCountrySearch))
-                : countries);
+                : countries.slice());
+
+        // 🔼🔽 Backend zaten çoktan aza (net kalan) sıralı gönderiyor — "azdan
+        // çoğa" seçiliyse burada tersine çeviriyoruz (karşılaştır modunda
+        // sıralama anlamsız, 2 ülke zaten yan yana).
+        if (!compareActive && currentSortDirection === 'asc') {
+            displayCountries.reverse();
+        }
 
         list.classList.toggle('compare-grid', compareActive && displayCountries.length === 2);
 
@@ -1915,6 +2067,7 @@
                 row.querySelectorAll('.household-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 loadCountries();
+                closeFiltersMenu();
             });
         });
     }
@@ -1931,6 +2084,7 @@
                 row.querySelectorAll('.household-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 loadCountries();
+                closeFiltersMenu();
             });
         });
     }
@@ -2046,10 +2200,13 @@
         setupRoleAutocomplete();
         renderHouseholdToggle();
         renderExperienceToggle();
+        setupFiltersMenu();
         renderCompareControls();
         setupShareButton();
+        setupSettingsMenu();
         setupCityChipDelegation();
         setupCountrySearch();
+        setupSortToggle();
         setupCarCountrySearch();
         setupQuizModeToggle();
         setupCarModeToggle();
