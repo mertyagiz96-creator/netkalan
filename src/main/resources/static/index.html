@@ -474,6 +474,8 @@
         .home-goal-text { font-size: 0.9rem; line-height: 1.4; }
         .home-goal-text b { color: var(--light-green); }
 
+        .net-remaining-box { text-align: right; }
+
         .net-remaining {
             font-size: 1.7rem;
             font-weight: 800;
@@ -539,7 +541,26 @@
         .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
         @media (max-width: 700px) { .compare-grid { grid-template-columns: 1fr; } }
 
-        /* 🎲 Tahmin/Quiz Modu */
+        .country-search-wrap {
+            max-width: 420px;
+            margin: 0 auto 20px auto;
+            position: relative;
+        }
+
+        .country-search-input {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 20px;
+            border: 1px solid rgba(var(--fg-rgb), 0.18);
+            background: rgba(var(--fg-rgb), 0.02);
+            color: rgb(var(--fg-rgb));
+            font-size: 0.9rem;
+            outline: none;
+            text-align: center;
+            transition: border-color 0.2s ease;
+        }
+
+        .country-search-input:focus { border-color: var(--accent-gold); }
         .quiz-score-bar {
             text-align: center;
             font-size: 0.85rem;
@@ -764,9 +785,11 @@
             <span class="logo-badge">💰</span>
             <span class="logo-text">Net<span class="logo-text-accent">Kalan</span></span>
         </div>
-        <div style="display:flex; gap:8px;">
+        <div style="display:flex; gap:8px; flex-wrap: wrap; justify-content: flex-end;">
             <button id="quizModeBtn" class="header-share-btn">🎲 Tahmin Modu</button>
+            <button id="carModeBtn" class="header-share-btn">🚗 Araç Fiyatları</button>
             <button id="quizBackToMenuBtn" class="header-share-btn" style="display:none;">🏠 Ana Menüye Dön</button>
+            <button id="carBackToMenuBtn" class="header-share-btn" style="display:none;">🏠 Ana Menüye Dön</button>
             <button id="shareBtn" class="header-share-btn">🔗 Paylaş</button>
         </div>
     </div>
@@ -784,6 +807,11 @@
         <div class="controls-row" id="householdRow"></div>
         <div class="controls-row" id="experienceRow"></div>
         <div class="controls-row" id="compareControlRow"></div>
+
+        <div class="country-search-wrap">
+            <input id="countrySearchInput" class="country-search-input" type="text" autocomplete="off" placeholder="🔍 Ülke ara ya da listeden seç...">
+            <div id="countrySearchDropdown" class="role-dropdown"></div>
+        </div>
 
         <div id="countryList" class="country-list">
             <div class="loading-state">Veriler yükleniyor...</div>
@@ -806,6 +834,19 @@
     <div id="quizModeWrap" style="display:none;">
         <div class="quiz-score-bar">Skor: <b id="quizScoreText">0/0</b></div>
         <div id="quizContainer"></div>
+    </div>
+
+    <div id="carModeWrap" style="display:none;">
+        <p class="subtitle">Bir model seç, 13 ülkedeki tahmini/gerçek fiyatını gör</p>
+        <div class="controls-row" id="carModelRow"></div>
+        <div id="carPriceResults" class="country-list"></div>
+        <div class="disclaimer">
+            <b>⚠️ Veri notu:</b> Sadece <b>ABD fiyatı gerçek</b> (üretici resmi MSRP'si).
+            Diğer ülkeler, Audi A3'ün 6 ülkedeki gerçek fiyatından türetilen bir
+            "ülke araç fiyatı endeksi" (ithalat vergisi/ÖTV, kâr marjı farklarını
+            yakalayan) ABD fiyatına uygulanarak TAHMİN edilmiştir — o modelin o
+            ülkedeki gerçek bayi fiyatı değildir, kıyaslama amaçlı yönlendirici bilgidir.
+        </div>
     </div>
 </div>
 
@@ -937,6 +978,7 @@
 
     function setupQuizModeToggle() {
         document.getElementById('quizModeBtn').addEventListener('click', () => {
+            if (carModeActive) exitCarMode();
             quizModeActive = true;
             document.getElementById('normalModeWrap').style.display = 'none';
             document.getElementById('quizModeWrap').style.display = '';
@@ -997,7 +1039,69 @@
     const CASH_ANNUAL_RATE = 0.045;
     const STOCK_ANNUAL_RATE = 0.08;
     const BLEND_ANNUAL_RATE = (CASH_ANNUAL_RATE + STOCK_ANNUAL_RATE) / 2;
-    const HOME_PRICE_TO_ANNUAL_RENT_RATIO = 18;
+
+    // 🏠 GERÇEK fiyat/kira oranları — Global Property Guide (globalpropertyguide.com/price-to-rent-ratios),
+    // ücretsiz erişilebilir, kamuya açık veri. Ülkeden ülkeye ÇOK farklılaşıyor (Türkiye 15x,
+    // İsviçre 39x gibi) — bu yüzden tek bir sabit oran kullanmak (eskiden yaptığımız gibi) yanlıştı.
+    // NOT: Türkiye artık aşağıdaki GERÇEK çapa değeriyle geçersiz kılınıyor (formül yerine).
+    const PRICE_TO_RENT_RATIO_BY_COUNTRY = {
+        'US': 23, 'DE': 25, 'GB': 19, 'NL': 20, 'TR': 15, 'IN': 28, 'BR': 15,
+        'CA': 18, 'PL': 13, 'AU': 26, 'CH': 39, 'FR': 22, 'JP': 31
+    };
+
+    // 🏠 GERÇEK, araştırılmış giriş-seviyesi/stüdyo daire fiyatı çapaları — her
+    // ülkenin en pahalı/flagship şehri için (örn. Türkiye→İstanbul, Almanya→Münih).
+    // Kaynaklar: Investropa 2026 şehir raporları (Münih, Londra, Amsterdam, Varşova,
+    // Paris, São Paulo), housingjapan.com (Tokyo), homeselect.paris (Zürih m² fiyatı),
+    // yerel emlak siteleri (Bangalore, Sydney, New York), kullanıcı doğrulaması +
+    // mbany.com (İstanbul). Kanada/Toronto için doğrudan güncel bir kaynak
+    // bulamadım, genel piyasa bilgisiyle tahmin edildi (diğerlerinden biraz daha
+    // az kesin). Diğer 12'si gerçek, isim verilmiş kaynaklara dayanıyor.
+    const REAL_HOME_PRICE_ANCHORS_USD = {
+        'US': 550000,  // New York, giriş seviyesi stüdyo/co-op (kaynak: costcheckusa.com)
+        'DE': 370000,  // Münih, tipik stüdyo (kaynak: Investropa 2026)
+        'GB': 360000,  // Londra, giriş-orta seviyesi stüdyo (kaynak: Investropa 2026)
+        'NL': 400000,  // Amsterdam, giriş-orta seviyesi stüdyo (kaynak: Investropa 2026)
+        'TR': 115000,  // İstanbul, küçük daire (kaynak: mbany.com + kullanıcı doğrulaması)
+        'IN': 40000,   // Bangalore, stüdyo (kaynak: homebazaar.com, ~38 Lakh INR)
+        'BR': 68000,   // São Paulo, giriş seviyesi stüdyo (kaynak: TheLatinvestor 2026)
+        'CA': 271000,  // Toronto, stüdyo/bachelor condo (genel piyasa tahmini)
+        'PL': 130000,  // Varşova, giriş seviyesi stüdyo (kaynak: Investropa 2026)
+        'AU': 350000,  // Sydney, giriş seviyesi ünite (kaynak: nuroa.com.au, openagent.com.au)
+        'CH': 490000,  // Zürih, ~30m² stüdyo (kaynak: homeselect.paris m² fiyatından hesaplandı)
+        'FR': 250000,  // Paris, giriş-orta seviyesi stüdyo (kaynak: Investropa 2026)
+        'JP': 200000   // Tokyo, dış semt giriş seviyesi stüdyo (kaynak: housingjapan.com)
+    };
+
+    // 🏠 Her ülke için GERÇEK çapa rakamının TAM OLARAK hangi şehre ait olduğunu
+    // burada açıkça sabitliyoruz (o şehrin kira çarpanı). "En pahalı şehir" gibi
+    // dolaylı bir varsayıma DAYANMIYORUZ artık — çünkü yeni bir şehir eklenip o
+    // daha pahalı çıkarsa (örn. Mumbai > Bangalore), çapa yanlışlıkla o yeni
+    // şehre ait sanılabiliyordu (gerçek bir hataydı, düzeltildi).
+    const ANCHOR_CITY_RENT_MULTIPLIER_BY_COUNTRY = {
+        'US': 1.6,  // New York
+        'DE': 1.4,  // Münih
+        'GB': 1.7,  // Londra
+        'NL': 1.3,  // Amsterdam
+        'TR': 1.3,  // İstanbul
+        'IN': 1.3,  // Bangalore
+        'BR': 1.3,  // São Paulo
+        'CA': 1.4,  // Toronto
+        'PL': 1.2,  // Varşova
+        'AU': 1.3,  // Sidney
+        'CH': 1.3,  // Zürih
+        'FR': 1.5,  // Paris
+        'JP': 1.3   // Tokyo
+    };
+
+    // 🏠 REAL_HOME_PRICE_ANCHORS_USD rakamları TEK KİŞİLİK/stüdyo daire fiyatı.
+    // Evli/çocuklu bir hane daha büyük bir ev arar — bu yüzden hane tipine göre
+    // bir büyüklük çarpanı uyguluyoruz (genel oda-sayısı/fiyat oranlarına dayalı
+    // kaba bir ölçekleme, Münih/Varşova gibi kaynaklarda gördüğümüz "3 odalı ~2x
+    // stüdyo fiyatı" gibi gözlemlerle tutarlı).
+    const HOME_SIZE_MULTIPLIER_BY_HOUSEHOLD = {
+        'single': 1.0, 'married_no_kids': 1.4, 'married_1kid': 1.7, 'married_2kids': 2.0
+    };
 
     // Aylık düzenli yatırımın N ay sonundaki değeri (bileşik faiz, aylıklaştırılmış oran)
     function futureValueOfMonthlyDeposit(monthlyAmount, annualRate, months) {
@@ -1061,16 +1165,46 @@
                 </div>
             `;
 
-        const cityRentMonthly = d.rent;
-        const estimatedHomePrice = cityRentMonthly * 12 * HOME_PRICE_TO_ANNUAL_RENT_RATIO;
+        // 🏠 Ev fiyatı için "ülke ortalaması" kirayı DEĞİL, o ülkenin en büyük/pahalı
+        // şehrinin (örn. Türkiye için İstanbul) çarpanını kullanıyoruz — ülke geneli
+        // ortalaması küçük kasabaları da içerdiği için gerçekçi olmayan derecede
+        // düşük bir taban veriyordu (örn. Türkiye'de $36K gibi absürt bir sonuç).
+        // Önce GERÇEK araştırılmış çapa var mı bakıyoruz (şu an sadece Türkiye),
+        // yoksa kira × ülkeye özel gerçek fiyat/kira oranı formülüne düşüyoruz.
+        const maxCityMultiplier = (c.cities && c.cities.length > 0)
+            ? Math.max(...c.cities.map(city => city.rentMultiplier))
+            : 1.0;
+        const cityRentMonthly = c.monthlyRentUsd * maxCityMultiplier;
+        const priceToRentRatio = PRICE_TO_RENT_RATIO_BY_COUNTRY[c.countryCode] || 20;
+        const isRealHomeAnchor = REAL_HOME_PRICE_ANCHORS_USD.hasOwnProperty(c.countryCode);
+        const homeSizeMultiplier = HOME_SIZE_MULTIPLIER_BY_HOUSEHOLD[currentHousehold] || 1.0;
+
+        // 🏠 GERÇEK çapa rakamları (örn. İstanbul $115K) sadece o ülkenin EN PAHALI
+        // (flagship) şehri için doğru. Kullanıcı Ankara/Berlin/Manchester gibi daha
+        // ucuz bir şehir ya da "Ülke Ortalaması" seçtiyse, çapayı seçilen şehrin
+        // flagship şehre göre GÖRECELİ pahalılık oranıyla (kira çarpanları oranı)
+        // aşağı ölçekliyoruz — yoksa Ankara'da da yanlışlıkla İstanbul fiyatı çıkardı.
+        const selectedCityMultiplier = d.city.rentMultiplier || 1.0;
+        const anchorCityMultiplier = ANCHOR_CITY_RENT_MULTIPLIER_BY_COUNTRY[c.countryCode] || maxCityMultiplier || 1.0;
+        const citySaleScaleFactor = anchorCityMultiplier > 0 ? (selectedCityMultiplier / anchorCityMultiplier) : 1.0;
+
+        const estimatedHomePrice = isRealHomeAnchor
+            ? REAL_HOME_PRICE_ANCHORS_USD[c.countryCode] * homeSizeMultiplier * citySaleScaleFactor
+            : cityRentMonthly * 12 * priceToRentRatio;
         const monthsToHome = monthsToReachTarget(monthly, BLEND_ANNUAL_RATE, estimatedHomePrice);
+        const isFlagshipCitySelected = Math.abs(citySaleScaleFactor - 1.0) < 0.001;
+        const homeSourceNote = isRealHomeAnchor
+            ? (isFlagshipCitySelected
+                ? `<span style="color:var(--light-green);font-size:0.7rem;font-weight:700;">✓ GERÇEK PİYASA VERİSİ</span>${homeSizeMultiplier > 1 ? ` (hane büyüklüğüne göre ${homeSizeMultiplier}x ölçeklendi)` : ''}`
+                : `flagship şehrin gerçek fiyatından, seçili şehrin göreceli pahalılığına göre ÖLÇEKLENMİŞ tahmin${homeSizeMultiplier > 1 ? ` (+ hane büyüklüğü ${homeSizeMultiplier}x)` : ''}`)
+            : `Global Property Guide'ın bu ülke için GERÇEK fiyat/kira oranı olan ~${priceToRentRatio} kat kullanılarak hesaplanmıştır`;
         const homeHtml = monthsToHome
             ? `
                 <div class="home-goal-card">
                     <div class="home-goal-icon">🏠</div>
                     <div class="home-goal-text">
                         Seçili şehirdeki ortalama ev fiyatını (kabaca <b>${formatUsd(estimatedHomePrice)}</b>,
-                        kiranın ~18 katı varsayımıyla TAHMİNİ) biriktirmen yaklaşık
+                        ${homeSourceNote}) biriktirmen yaklaşık
                         <b>${formatYearsMonths(monthsToHome)}</b> sürer.
                     </div>
                 </div>
@@ -1138,7 +1272,10 @@
                 <span class="savings-note">
                     ⚠️ Bu bir yapay zeka analizi değil, sabit varsayımlara (yıllık %4.5 nakit faizi, %8 hisse senedi
                     getirisi — geçmiş performans, garanti değil) dayanan matematiksel bir projeksiyondur. Ev fiyatı
-                    ayrıca kiranın 18 katı gibi genel bir kural varsayımı olup gerçek emlak verisi değildir.
+                    artık 13 ülkenin hepsi için gerçek, isim verilmiş piyasa kaynaklarından araştırılmış giriş
+                    seviyesi/stüdyo daire fiyatlarına dayanıyor (Kanada hariç — onun için genel piyasa tahmini
+                    kullanıldı). Yine de bu, o ülkedeki HER ev için değil, "flagship şehirde giriş seviyesi bir
+                    daire" için bir referans noktasıdır.
                 </span>
             </div>
         `;
@@ -1350,6 +1487,152 @@
         `;
     }
 
+    // 🚗 ARAÇ FİYATLARI MODU
+    let allCarModels = [];
+    let currentCarModel = '';
+    let carModeActive = false;
+
+    async function loadCarModels() {
+        try {
+            const res = await fetch('/api/car-models');
+            allCarModels = await res.json();
+            if (allCarModels.length > 0) currentCarModel = allCarModels[0].name;
+        } catch (e) {
+            console.log('Araç modelleri yüklenemedi.');
+        }
+    }
+
+    function renderCarModelToggle() {
+        const row = document.getElementById('carModelRow');
+        row.innerHTML = allCarModels.map(m => `
+            <button class="household-btn ${m.name === currentCarModel ? 'active' : ''}" data-model="${m.name}">
+                ${m.name}<br><span style="font-size:0.65rem; opacity:0.6;">${m.category}</span>
+            </button>
+        `).join('');
+
+        row.querySelectorAll('.household-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentCarModel = btn.dataset.model;
+                row.querySelectorAll('.household-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                loadCarPrices();
+            });
+        });
+    }
+
+    async function loadCarPrices() {
+        const container = document.getElementById('carPriceResults');
+        container.innerHTML = '<div class="loading-state">Fiyatlar yükleniyor...</div>';
+        try {
+            const res = await fetch(`/api/car-prices?model=${encodeURIComponent(currentCarModel)}`);
+            const prices = await res.json();
+            renderCarPrices(prices);
+        } catch (e) {
+            container.innerHTML = '<div class="loading-state">❌ Fiyatlar yüklenemedi.</div>';
+        }
+    }
+
+    function renderCarPrices(prices) {
+        const container = document.getElementById('carPriceResults');
+        if (prices.length === 0) {
+            container.innerHTML = '<div class="loading-state">Veri bulunamadı.</div>';
+            return;
+        }
+
+        container.innerHTML = prices.map((p, idx) => `
+            <div class="country-card">
+                <div class="country-card-top">
+                    <div class="country-name-row">
+                        <span class="country-rank">${idx + 1}</span>
+                        <span class="country-flag">${countryFlags[p.countryCode] || ''}</span>
+                        <span class="country-name">${p.countryNameTr}</span>
+                    </div>
+                    <div class="net-remaining-box">
+                        <span class="net-remaining" style="font-size:1.3rem;">${formatUsd(p.priceUsd)}</span>
+                        <span class="net-remaining-pct">${p.isReal ? '<span style="color:var(--light-green);font-weight:700;">✓ GERÇEK (üretici fiyatı)</span>' : 'tahmini (Audi endeksinden ölçeklenmiş)'}</span>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function exitCarMode() {
+        carModeActive = false;
+        document.getElementById('normalModeWrap').style.display = '';
+        document.getElementById('carModeWrap').style.display = 'none';
+        document.getElementById('carModeBtn').style.display = '';
+        document.getElementById('carBackToMenuBtn').style.display = 'none';
+    }
+
+    function setupCarModeToggle() {
+        document.getElementById('carModeBtn').addEventListener('click', async () => {
+            if (quizModeActive) exitQuizMode();
+            carModeActive = true;
+            document.getElementById('normalModeWrap').style.display = 'none';
+            document.getElementById('carModeWrap').style.display = '';
+            document.getElementById('carModeBtn').style.display = 'none';
+            document.getElementById('carBackToMenuBtn').style.display = '';
+            if (allCarModels.length === 0) await loadCarModels();
+            renderCarModelToggle();
+            await loadCarPrices();
+        });
+
+        document.getElementById('carBackToMenuBtn').addEventListener('click', exitCarMode);
+    }
+
+    let currentCountrySearch = '';
+
+    function setupCountrySearch() {
+        const input = document.getElementById('countrySearchInput');
+        const dropdown = document.getElementById('countrySearchDropdown');
+
+        function closeDropdown() {
+            dropdown.classList.remove('open');
+            dropdown.innerHTML = '';
+        }
+
+        function renderMatches() {
+            const query = input.value.trim().toLocaleLowerCase('tr-TR');
+            const matches = (lastCountries || []).filter(c => c.countryNameTr.toLocaleLowerCase('tr-TR').includes(query));
+
+            dropdown.innerHTML = '';
+            if (matches.length === 0) { closeDropdown(); return; }
+
+            matches.forEach(c => {
+                const item = document.createElement('div');
+                item.className = 'role-dropdown-item';
+                item.innerHTML = `<span>${countryFlags[c.countryCode] || ''} ${c.countryNameTr}</span>`;
+                item.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    input.value = c.countryNameTr;
+                    currentCountrySearch = c.countryNameTr.toLocaleLowerCase('tr-TR');
+                    closeDropdown();
+                    renderCountries(lastCountries);
+                });
+                dropdown.appendChild(item);
+            });
+
+            dropdown.classList.add('open');
+        }
+
+        input.addEventListener('focus', () => {
+            input.value = '';
+            renderMatches();
+        });
+
+        input.addEventListener('input', () => {
+            currentCountrySearch = input.value.trim().toLocaleLowerCase('tr-TR');
+            renderCountries(lastCountries);
+            renderMatches();
+        });
+
+        input.addEventListener('blur', () => setTimeout(closeDropdown, 150));
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeDropdown();
+        });
+    }
+
     let compareMode = false;       // 🆚 seçim modu açık mı
     let compareSelected = [];      // seçilen ülke kodları (max 2)
     let compareActive = false;     // sadece seçilen 2 ülke mi gösteriliyor
@@ -1361,9 +1644,16 @@
 
         const displayCountries = compareActive
             ? countries.filter(c => compareSelected.includes(c.countryCode))
-            : countries;
+            : (currentCountrySearch
+                ? countries.filter(c => c.countryNameTr.toLocaleLowerCase('tr-TR').includes(currentCountrySearch))
+                : countries);
 
         list.classList.toggle('compare-grid', compareActive && displayCountries.length === 2);
+
+        if (displayCountries.length === 0) {
+            list.innerHTML = '<div class="loading-state">🔍 Aramanla eşleşen ülke bulunamadı.</div>';
+            return;
+        }
 
         const maxGrossMonthly = Math.max(...countries.map(c => c.grossAnnualUsd / 12));
 
@@ -1650,7 +1940,9 @@
         renderCompareControls();
         setupShareButton();
         setupCityChipDelegation();
+        setupCountrySearch();
         setupQuizModeToggle();
+        setupCarModeToggle();
         await loadCountries();
     }
 

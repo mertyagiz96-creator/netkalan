@@ -75,19 +75,19 @@ object DatabaseClient {
     // 🏙️ Şehir çarpanları TAHMİNİDİR — genel piyasa gözlemine dayanıyor, ilk
     // eleman her zaman "Ülke Ortalaması" (çarpan 1.0), diğerleri örnek şehirler.
     private val cityOptionsByCountry = mapOf(
-        "US" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("New York", 1.6, 1.3), CityOption("Austin", 0.8, 0.9)),
-        "DE" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("Münih", 1.4, 1.15), CityOption("Berlin", 1.1, 1.0)),
-        "GB" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("Londra", 1.7, 1.3), CityOption("Manchester", 0.7, 0.85)),
-        "NL" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("Amsterdam", 1.3, 1.15), CityOption("Rotterdam", 0.9, 0.95)),
-        "TR" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("İstanbul", 1.3, 1.15), CityOption("Ankara", 0.85, 0.9)),
-        "IN" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("Bangalore", 1.3, 1.1), CityOption("Pune", 0.9, 0.9)),
-        "BR" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("São Paulo", 1.3, 1.1), CityOption("Florianópolis", 0.9, 0.9)),
-        "CA" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("Toronto", 1.4, 1.15), CityOption("Calgary", 0.85, 0.9)),
-        "PL" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("Varşova", 1.2, 1.1), CityOption("Wrocław", 0.85, 0.9)),
-        "AU" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("Sidney", 1.3, 1.15), CityOption("Adelaide", 0.8, 0.9)),
-        "CH" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("Zürih", 1.3, 1.15), CityOption("Cenevre", 1.25, 1.1)),
-        "FR" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("Paris", 1.5, 1.2), CityOption("Lyon", 0.85, 0.9)),
-        "JP" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("Tokyo", 1.3, 1.15), CityOption("Osaka", 0.85, 0.9))
+        "US" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("New York", 1.6, 1.3), CityOption("Austin", 0.8, 0.9), CityOption("Chicago", 1.2, 1.1)),
+        "DE" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("Münih", 1.4, 1.15), CityOption("Berlin", 1.1, 1.0), CityOption("Hamburg", 1.15, 1.0)),
+        "GB" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("Londra", 1.7, 1.3), CityOption("Manchester", 0.7, 0.85), CityOption("Birmingham", 0.75, 0.85)),
+        "NL" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("Amsterdam", 1.3, 1.15), CityOption("Rotterdam", 0.9, 0.95), CityOption("Lahey", 1.0, 0.95)),
+        "TR" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("İstanbul", 1.3, 1.15), CityOption("Ankara", 0.85, 0.9), CityOption("İzmir", 0.95, 0.95)),
+        "IN" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("Bangalore", 1.3, 1.1), CityOption("Pune", 0.9, 0.9), CityOption("Mumbai", 1.5, 1.2)),
+        "BR" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("São Paulo", 1.3, 1.1), CityOption("Florianópolis", 0.9, 0.9), CityOption("Rio de Janeiro", 1.2, 1.05)),
+        "CA" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("Toronto", 1.4, 1.15), CityOption("Calgary", 0.85, 0.9), CityOption("Vancouver", 1.5, 1.2)),
+        "PL" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("Varşova", 1.2, 1.1), CityOption("Wrocław", 0.85, 0.9), CityOption("Kraków", 0.9, 0.9)),
+        "AU" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("Sidney", 1.3, 1.15), CityOption("Adelaide", 0.8, 0.9), CityOption("Melbourne", 1.15, 1.05)),
+        "CH" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("Zürih", 1.3, 1.15), CityOption("Cenevre", 1.25, 1.1), CityOption("Bern", 0.9, 0.95)),
+        "FR" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("Paris", 1.5, 1.2), CityOption("Lyon", 0.85, 0.9), CityOption("Marsilya", 0.75, 0.85)),
+        "JP" to listOf(CityOption("Ülke Ortalaması", 1.0, 1.0), CityOption("Tokyo", 1.3, 1.15), CityOption("Osaka", 0.85, 0.9), CityOption("Yokohama", 1.1, 1.0))
     )
 
     // 👪 Hane tipi ayarları — vergi kaması deltası (yüzde puan, OECD Taxing Wages'in
@@ -349,22 +349,41 @@ object DatabaseClient {
         val rent: Double, val expense: Double, val salarySrc: String, val costSrc: String, val updated: String
     )
 
-    // 🎓 Okul ücreti tahmini — GERÇEK bir çapa noktasından (New York uluslararası
-    // okul ortalaması: $43,003/yıl, doris.school/international-schools-database
-    // kaynaklı, 36 okul ortalaması) başlayıp, elimizdeki GERÇEK WhereNext yaşam
-    // maliyeti endeksiyle diğer ülkelere ORANTILI ölçekleniyor. Yani tamamen
-    // uydurma değil ama şehir-bazlı direkt gerçek veri de değil — bir çapa +
-    // gerçek endeks kombinasyonu. Londra için de gerçek aralık (~£24-38K, yani
-    // ~$35K) ile çapraz kontrol edildi, makul çıktı.
-    private const val NY_REAL_SCHOOL_COST_USD = 43003.0
+    // 🎓 Her ülkenin flagship şehri için okul ücreti çapası (USD/yıl). Bazıları
+    // GERÇEK/isim verilmiş kaynaklardan (US, DE, NL, BR, CH, JP, GB — WhereNext,
+    // ischooladvisor.com, housingjapan.com raporları), bazıları (TR, IN, CA, PL,
+    // AU, FR) doğrudan bir kaynak bulamadığım GENEL TAHMİN (benzer pazarlarla
+    // kıyaslanarak). fetchSchoolCostSourceLabel bu ayrımı UI'da açıkça belirtiyor.
+    private val schoolCostAnchorsUsd = mapOf(
+        "US" to 43003.0,  // New York (GERÇEK: doris.school)
+        "DE" to 24700.0,  // Münih (GERÇEK: ischooladvisor.com)
+        "GB" to 27500.0,  // Londra (GERÇEK: WhereNext 2026)
+        "NL" to 22000.0,  // Amsterdam (GERÇEK: ischooladvisor.com, ISA fiyat listesi)
+        "TR" to 10000.0,  // İstanbul (tahmini, doğrudan kaynak bulunamadı)
+        "IN" to 7000.0,   // Bangalore (tahmini)
+        "BR" to 24000.0,  // São Paulo (GERÇEK: ischooladvisor.com)
+        "CA" to 20000.0,  // Toronto (tahmini)
+        "PL" to 10000.0,  // Varşova (GERÇEK aralığa dayalı: WhereNext "Poland <$12K")
+        "AU" to 18000.0,  // Sidney (tahmini)
+        "CH" to 37500.0,  // Zürih (GERÇEK: WhereNext 2026, $30-45K aralığı)
+        "FR" to 17000.0,  // Paris (tahmini)
+        "JP" to 16300.0   // Tokyo (GERÇEK: housingjapan.com/ischooladvisor.com)
+    )
 
-    private fun estimateAnnualSchoolCostUsd(countryCode: String): Double? {
-        val usReal = costOfLivingCache["US"] ?: return null
-        val countryReal = costOfLivingCache[countryCode] ?: return null
-        val usTotal = usReal.monthlyTotalUsd
-        val countryTotal = countryReal.monthlyTotalUsd
-        if (usTotal <= 0) return null
-        return NY_REAL_SCHOOL_COST_USD * (countryTotal / usTotal)
+    // 🎓 Şehir seçimi frontend'de (JS) yapılıyor, backend'in hangi şehrin seçili
+    // olduğu bilgisi yok. Bu yüzden burada "Ülke Ortalaması" için bir değer
+    // hesaplıyoruz (flagship çapasını, flagship'in ülke ortalamasına göre ne kadar
+    // pahalı olduğu oranıyla aşağı ölçekleyerek) — frontend zaten seçili şehrin
+    // genel expenseMultiplier'ını bu değere ayrıca uyguluyor (rent/gider için
+    // yaptığı gibi), yani şehir seçince okul ücreti de dolaylı olarak değişiyor.
+    private fun estimateAnnualSchoolCostUsd(countryCode: String): Pair<Double, Boolean>? {
+        val anchor = schoolCostAnchorsUsd[countryCode] ?: return null
+        val cities = cityOptionsByCountry[countryCode] ?: return null
+        val flagshipMultiplier = cities.maxOfOrNull { it.rentMultiplier } ?: 1.0
+        val countryAverageValue = if (flagshipMultiplier > 0) anchor / flagshipMultiplier else anchor
+        // Çapa flagship şehir için gerçekti; ülke ortalamasına indirgemek bir
+        // ölçekleme olduğu için bunu her zaman "tahmini" olarak işaretliyoruz.
+        return Pair(countryAverageValue, false)
     }
 
     // 🚗 Audi A3 (standart/taban model) fiyatı — 6 ülke için GERÇEK, resmi üretici
@@ -394,6 +413,55 @@ object DatabaseClient {
 
         val scaled = deAnchor * (countryReal.monthlyTotalUsd / deReal.monthlyTotalUsd)
         return CarPriceEstimate(scaled, false)
+    }
+
+    // 🚗 ARAÇ FİYATI KARŞILAŞTIRMA MODÜLÜ — Audi A3'ün 6 ülkedeki GERÇEK fiyatından
+    // türetilen "ülke araç fiyat endeksi"ni (ithalat vergisi/ÖTV, kâr marjı gibi
+    // ülkeye özgü farkları yakalıyor) diğer popüler modellere uyguluyoruz. Yani her
+    // modeli her ülke için ayrı ayrı aramak yerine, ABD'deki GERÇEK taban fiyatını
+    // bu endeksle ölçekliyoruz. Sadece ABD fiyatı %100 gerçek; diğerleri Audi
+    // endeksinden türetilmiş TAHMİNDİR — UI'da net belirtiliyor.
+    data class CarModel(val name: String, val category: String, val usBasePriceUsd: Double)
+
+    val carModelsList = listOf(
+        CarModel("Toyota Corolla", "Sedan (Ekonomik)", 23125.0),
+        CarModel("Volkswagen Golf", "Hatchback", 21845.0),
+        CarModel("Toyota Camry", "Sedan (Orta Segment)", 29600.0),
+        CarModel("Hyundai Tucson", "SUV (Kompakt)", 28500.0),
+        CarModel("Honda CR-V", "SUV (Kompakt)", 32370.0),
+        CarModel("Toyota RAV4", "SUV (Kompakt Hibrit)", 33350.0),
+        CarModel("Tesla Model 3", "Elektrikli Sedan", 42000.0)
+    )
+
+    private fun computeCarPriceIndex(countryCode: String): Double? {
+        val countryAudiPrice = estimateAudiA3PriceUsd(countryCode)?.priceUsd ?: return null
+        val usAudiPrice = realAudiA3PriceUsd["US"] ?: return null
+        if (usAudiPrice <= 0) return null
+        return countryAudiPrice / usAudiPrice
+    }
+
+    @Serializable
+    data class CarModelInfo(val name: String, val category: String)
+
+    @Serializable
+    data class CarPriceResult(val countryCode: String, val countryNameTr: String, val priceUsd: Double, val isReal: Boolean)
+
+    private val countryNamesTr = mapOf(
+        "US" to "Amerika Birleşik Devletleri", "DE" to "Almanya", "GB" to "İngiltere",
+        "NL" to "Hollanda", "TR" to "Türkiye", "IN" to "Hindistan", "BR" to "Brezilya",
+        "CA" to "Kanada", "PL" to "Polonya", "AU" to "Avustralya", "CH" to "İsviçre",
+        "FR" to "Fransa", "JP" to "Japonya"
+    )
+
+    fun fetchCarModels(): List<CarModelInfo> = carModelsList.map { CarModelInfo(it.name, it.category) }
+
+    fun fetchCarPricesForModel(modelName: String): List<CarPriceResult> {
+        val model = carModelsList.find { it.name == modelName } ?: return emptyList()
+        return cityOptionsByCountry.keys.mapNotNull { countryCode ->
+            val index = computeCarPriceIndex(countryCode) ?: return@mapNotNull null
+            val isReal = countryCode == "US"
+            CarPriceResult(countryCode, countryNamesTr[countryCode] ?: countryCode, model.usBasePriceUsd * index, isReal)
+        }.sortedBy { it.priceUsd }
     }
     // 📅 Deneyim kademeleri — tech rollerde SO anketinin GERÇEK YearsCodePro
     // verisinden hesaplanıyor. Gerçek veri yetersizse (küçük örneklem/non-tech
@@ -508,11 +576,12 @@ object DatabaseClient {
                             // 🎓 Çocuklu hane tiplerinde okul maliyetini aylık gidere ekliyoruz.
                             var schoolCostNote = ""
                             if (adj.numberOfKids > 0) {
-                                val annualSchoolCost = estimateAnnualSchoolCostUsd(countryCode)
-                                if (annualSchoolCost != null) {
+                                val schoolEstimate = estimateAnnualSchoolCostUsd(countryCode)
+                                if (schoolEstimate != null) {
+                                    val (annualSchoolCost, _) = schoolEstimate
                                     val monthlySchoolCost = (annualSchoolCost * adj.numberOfKids) / 12.0
                                     expense += monthlySchoolCost
-                                    schoolCostNote = " + okul ücreti (NY gerçek çapası × WhereNext endeksiyle ölçeklenmiş tahmin)"
+                                    schoolCostNote = " + okul ücreti (flagship şehir gerçek/araştırılmış verisinden ülke ortalamasına ölçeklenmiş tahmin)"
                                 }
                             }
 

@@ -115,6 +115,17 @@ fun main() {
                 call.respond(DatabaseClient.fetchDataCoverage())
             }
 
+            // 🚗 Araç fiyatı karşılaştırma modülü — model listesi ve seçilen modelin
+            // 13 ülkedeki tahmini/gerçek fiyatları.
+            get("/api/car-models") {
+                call.respond(DatabaseClient.fetchCarModels())
+            }
+
+            get("/api/car-prices") {
+                val model = call.request.queryParameters["model"] ?: ""
+                call.respond(DatabaseClient.fetchCarPricesForModel(model))
+            }
+
             // 📅 Seçilebilir deneyim kademeleri (0-5 / 5-10 / 10+ / Tüm Deneyimler)
             get("/api/experience-tiers") {
                 call.respond(DatabaseClient.fetchAllExperienceTiers())
