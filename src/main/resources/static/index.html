@@ -1164,19 +1164,19 @@
     function updateStreakDisplay() {
         const el = document.getElementById('quizStreakText');
         if (el) {
-            el.innerHTML = `🔥 Serin: <b>${currentStreak}</b> &nbsp;·&nbsp; 🏆 Global Rekor: <b>${globalRecord.streak}</b>${globalRecord.playerName && globalRecord.playerName !== '—' ? ` (${globalRecord.playerName})` : ''}`;
+            el.innerHTML = `🔥 Serin: <b>${currentStreak}</b> &nbsp;·&nbsp; 🏆 Global Rekor: <b>${globalRecord.streak}</b>`;
         }
     }
 
     async function submitStreakIfRecord() {
         if (currentStreak <= globalRecord.streak) return;
-        const name = prompt(`🎉 Yeni GLOBAL rekor! (${currentStreak} doğru üst üste)\nHerkesin göreceği rekor tablosunda görünmek için bir isim/rumuz yaz:`, '');
-        if (name === null) return; // vazgeçti, kayıt etme
+        // 🏆 İsim sormadan otomatik kaydediyoruz — istenirse isim özelliğini
+        // ileride ayrıca ekleriz, şimdilik akışı basit tutuyoruz.
         try {
             const res = await fetch('/api/quiz-leaderboard', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ playerName: name || 'Anonim', streak: currentStreak })
+                body: JSON.stringify({ playerName: 'Anonim', streak: currentStreak })
             });
             globalRecord = await res.json();
             updateStreakDisplay();
