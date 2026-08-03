@@ -63,7 +63,15 @@ data class DataCoverageRow(
 data class QuizRecord(val playerName: String, val streak: Int, val achievedAt: String)
 
 @Serializable
-data class QuizRecordSubmission(
+data class QuizRecordSubmission(val playerName: String, val streak: Int)
+
+// 🏆 Supabase'e GİDEN isteğin JSON alan adı `player_name` (alt çizgili, Postgres
+// sütun adıyla eşleşsin diye). Yukarıdaki QuizRecordSubmission ise frontend'den
+// BİZE GELEN isteği okumak için — o `playerName` (camelCase) gönderiyor. Aynı
+// sınıfı ikisi için de kullanmak birini düzeltirken diğerini bozuyordu — bu
+// yüzden ayrı sınıflara böldük.
+@Serializable
+data class SupabaseQuizInsert(
     @SerialName("player_name") val playerName: String,
     val streak: Int
 )
@@ -747,7 +755,7 @@ object DatabaseClient {
                     header("apikey", supabaseKey)
                     header("Authorization", "Bearer $supabaseKey")
                     header("Content-Type", "application/json")
-                    setBody(Json.encodeToString(QuizRecordSubmission(safeName, streak)))
+                    setBody(Json.encodeToString(SupabaseQuizInsert(safeName, streak)))
                 }
                 // ⚠️ ÖNEMLİ DÜZELTME: Önceden bu kontrol yoktu — istek başarısız
                 // olsa bile (örn. izin hatası) fonksiyon "başarılı" gibi davranıp
