@@ -840,8 +840,22 @@ object DatabaseClient {
                                 gross = realForAll.medianUsd
                                 salarySourceFinal = "Stack Overflow Developer Survey 2025 — GERÇEK medyan (N=${realForAll.sampleSize} yanıt)"
                             } else {
-                                gross = rs.getDouble("gross_annual_usd") * expMultiplier
-                                salarySourceFinal = rs.getString("salary_source") + if (resolvedExperience != "all") " × deneyim çarpanı (tahmini)" else ""
+                                // ⚠️ ÖNEMLİ DÜZELTME: Bu rol için yeterli gerçek SO verisi yoksa,
+                                // eskiden DB'deki BAYAT (SO doğrulamasından ÖNCEKİ) sabit sayıdan
+                                // ölçekliyorduk — bu, Fransa'da DevOps Engineer gibi durumlarda
+                                // (Backend gerçek $71,929 iken DevOps hâlâ eski $55,000'dan
+                                // ölçekleniyordu) anlamsız/negatif sonuçlara yol açıyordu. Artık
+                                // önce o ülke için GERÇEK Backend Developer medyanı var mı bakıyoruz,
+                                // varsa ondan ölçekliyoruz — çok daha güncel ve tutarlı bir taban.
+                                val realBackendAnchor = realSalaryCache["$countryCode|Backend Developer|all"]
+                                val roleMultiplier = roleMultipliers[roleForRow]
+                                if (realBackendAnchor != null && realBackendAnchor.sampleSize >= MIN_SAMPLE_SIZE_FOR_REAL_DATA && roleMultiplier != null) {
+                                    gross = realBackendAnchor.medianUsd * roleMultiplier * expMultiplier
+                                    salarySourceFinal = "Stack Overflow — bu ülkenin GERÇEK Backend Developer medyanından (N=${realBackendAnchor.sampleSize}) role özel oranla ölçeklendi (tahmini ayarlama)"
+                                } else {
+                                    gross = rs.getDouble("gross_annual_usd") * expMultiplier
+                                    salarySourceFinal = rs.getString("salary_source") + if (resolvedExperience != "all") " × deneyim çarpanı (tahmini)" else ""
+                                }
                             }
 
                             // 👪 Hane tipi vergi kamasını düşürüyor (aile avantajları), 0'ın
