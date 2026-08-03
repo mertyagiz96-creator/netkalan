@@ -2,11 +2,13 @@ import java.io.File
 import java.sql.Connection
 import java.sql.DriverManager
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
+import io.ktor.http.*
 import kotlinx.serialization.json.*
 
 // 💡 Bir ülkenin tam finansal profili — frontend bunu direkt render ediyor.
@@ -729,7 +731,7 @@ object DatabaseClient {
                     header("apikey", supabaseKey)
                     header("Authorization", "Bearer $supabaseKey")
                     header("Content-Type", "application/json")
-                    setBody(Json.encodeToString(QuizRecordSubmission.serializer(), QuizRecordSubmission(safeName, streak)))
+                    setBody(Json.encodeToString(QuizRecordSubmission(safeName, streak)))
                 }
                 // ⚠️ ÖNEMLİ DÜZELTME: Önceden bu kontrol yoktu — istek başarısız
                 // olsa bile (örn. izin hatası) fonksiyon "başarılı" gibi davranıp
