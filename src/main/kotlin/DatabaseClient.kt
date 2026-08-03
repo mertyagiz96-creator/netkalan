@@ -2,6 +2,7 @@ import java.io.File
 import java.sql.Connection
 import java.sql.DriverManager
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.encodeToString
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
@@ -62,7 +63,10 @@ data class DataCoverageRow(
 data class QuizRecord(val playerName: String, val streak: Int, val achievedAt: String)
 
 @Serializable
-data class QuizRecordSubmission(val playerName: String, val streak: Int)
+data class QuizRecordSubmission(
+    @SerialName("player_name") val playerName: String,
+    val streak: Int
+)
 
 object DatabaseClient {
 
