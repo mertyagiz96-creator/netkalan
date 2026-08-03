@@ -725,14 +725,24 @@ object DatabaseClient {
         if (current == null || streak > current.streak) {
             val safeName = playerName.trim().take(24).ifBlank { "Anonim" }
             try {
-                httpClient.post("$supabaseUrl/rest/v1/quiz_records") {
+                val response = httpClient.post("$supabaseUrl/rest/v1/quiz_records") {
                     header("apikey", supabaseKey)
                     header("Authorization", "Bearer $supabaseKey")
                     header("Content-Type", "application/json")
                     setBody(Json.encodeToString(QuizRecordSubmission.serializer(), QuizRecordSubmission(safeName, streak)))
                 }
+                // ⚠️ ÖNEMLİ DÜZELTME: Önceden bu kontrol yoktu — istek başarısız
+                // olsa bile (örn. izin hatası) fonksiyon "başarılı" gibi davranıp
+                // sahte bir rekor döndürüyordu. Artık gerçekten 2xx dönmüyorsa
+                // eski rekoru koruyoruz, kullanıcıya yanlış bilgi vermiyoruz.
+                if (!response.status.isSuccess()) {
+                    val errorBody = response.bodyAsText()
+                    println("🔥 Supabase liderlik tablosu yazma hatası: HTTP ${response.status} — $errorBody")
+                    return current ?: QuizRecord("—", 0, "")
+                }
             } catch (e: Exception) {
                 println("🔥 Supabase liderlik tablosu yazma hatası: ${e.message}")
+                return current ?: QuizRecord("—", 0, "")
             }
             return QuizRecord(safeName, streak, "")
         }
