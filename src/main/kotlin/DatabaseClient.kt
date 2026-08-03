@@ -503,6 +503,18 @@ object DatabaseClient {
         val rent: Double, val expense: Double, val salarySrc: String, val costSrc: String, val updated: String
     )
 
+    // 🏠 ÖNEMLİ DÜZELTME: WhereNext'in Türkiye için verdiği kira rakamı ÇOK
+    // BAYAT/YANLIŞ çıktı — gerçek kaynaklar (Endeksa-Emlakjet, NTV, KiraMetre,
+    // Haziran 2026) İstanbul'da ortalama kiranın 33.000-45.000 TL/ay (~$750-1000)
+    // olduğunu gösteriyor, WhereNext ise sadece ~$120/ay (ülke ortalaması)
+    // veriyordu — 5-6 kat düşük! Muhtemelen liranın hızlı değer kaybı nedeniyle
+    // WhereNext'in verisi güncel değil. Bu yüzden Türkiye için ülke ortalaması
+    // kirayı gerçek, güncel araştırmadan gelen bir çapayla GEÇERSİZ KILIYORUZ —
+    // şehir çarpanları (İstanbul 1.3x vb.) üzerine yine uygulanıyor.
+    private val realCountryAverageRentOverrideUsd = mapOf(
+        "TR" to 533.0  // Türkiye geneli ~24.000 TL/ay (NTV, Haziran 2026) / ~45 TL kur
+    )
+
     // 🎓 Her ülkenin flagship şehri için okul ücreti çapası (USD/yıl). Bazıları
     // GERÇEK/isim verilmiş kaynaklardan (US, DE, NL, BR, CH, JP, GB — WhereNext,
     // ischooladvisor.com, housingjapan.com raporları), bazıları (TR, IN, CA, PL,
@@ -833,7 +845,9 @@ object DatabaseClient {
                             // Yoksa (WhereNext'te kapsam dışı bir ülkeyse) eski tahminî
                             // rakama düşüyoruz — kaynak metninde bu açıkça belirtiliyor.
                             val realCost = costOfLivingCache[countryCode]
-                            val baseRent = realCost?.monthlyRentUsd ?: rs.getDouble("monthly_rent_usd")
+                            val baseRent = realCountryAverageRentOverrideUsd[countryCode]
+                                ?: realCost?.monthlyRentUsd
+                                ?: rs.getDouble("monthly_rent_usd")
                             val baseExpense = realCost?.monthlyExpenseUsd ?: rs.getDouble("monthly_expense_usd")
 
                             // 🏙️ Şehir çarpanları burada UYGULANMIYOR — frontend, ülke ortalaması
@@ -855,7 +869,9 @@ object DatabaseClient {
                                 }
                             }
 
-                            val costSourceFinal = (if (realCost != null) {
+                            val costSourceFinal = (if (realCountryAverageRentOverrideUsd.containsKey(countryCode)) {
+                                "Kira: gerçek, güncel piyasa araştırması (WhereNext'in bayat verisi yerine) — Diğer giderler: WhereNext Cost of Living Index 2026"
+                            } else if (realCost != null) {
                                 "WhereNext Cost of Living Index 2026 — GERÇEK (World Bank ICP 2021 verisine dayanıyor)"
                             } else {
                                 rs.getString("cost_source")
