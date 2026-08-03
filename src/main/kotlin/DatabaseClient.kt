@@ -2,6 +2,12 @@ import java.io.File
 import java.sql.Connection
 import java.sql.DriverManager
 import kotlinx.serialization.Serializable
+import io.ktor.client.*
+import io.ktor.client.engine.cio.*
+import io.ktor.client.plugins.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import kotlinx.serialization.json.*
 
 // 💡 Bir ülkenin tam finansal profili — frontend bunu direkt render ediyor.
 @Serializable
@@ -292,23 +298,10 @@ object DatabaseClient {
             stmt.execute("PRAGMA busy_timeout=5000;")
         }
 
-        // 🏆 Tahmin modu GLOBAL liderlik tablosu — country_financials'tan bağımsız,
-        // şema versiyonu değişse bile SİLİNMİYOR (kullanıcıların rekoru kaybolmasın).
-        // ⚠️ Dürüst not: Render free tier'da kalıcı disk yok — sunucu her yeniden
-        // başladığında (uzun süre inaktiflik/yeni deploy) bu tablo da sıfırlanıyor.
-        // Yani "global rekor" aslında "son yeniden başlatmadan beri global rekor".
-        conn.createStatement().use { stmt ->
-            stmt.execute(
-                """
-                CREATE TABLE IF NOT EXISTS quiz_records (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    player_name TEXT NOT NULL,
-                    streak INTEGER NOT NULL,
-                    achieved_at TEXT NOT NULL
-                )
-                """.trimIndent()
-            )
-        }
+        // 🏆 NOT: Tahmin modu liderlik tablosu artık burada (SQLite'ta) DEĞİL,
+        // Supabase'in ücretsiz Postgres'inde tutuluyor (aşağıda fetchTopQuizRecord/
+        // submitQuizRecordIfBeatsCurrent fonksiyonlarında) — Render free tier'da
+        // kalıcı disk olmadığı için SQLite'taki rekor her uyku sonrası sıfırlanıyordu.
 
         if (isNew) {
             initSchemaAndSeed(conn)
@@ -685,34 +678,63 @@ object DatabaseClient {
         return householdSettings.map { (key, adj) -> HouseholdInfo(key, adj.labelTr) }
     }
 
-    // 🏆 Global liderlik tablosu — sadece en yüksek seriyi (rekor) döndürüyoruz.
-    fun fetchTopQuizRecord(): QuizRecord? {
-        return withConnection { conn ->
-            conn.prepareStatement("SELECT player_name, streak, achieved_at FROM quiz_records ORDER BY streak DESC, achieved_at ASC LIMIT 1").use { stmt ->
-                stmt.executeQuery().use { rs ->
-                    if (rs.next()) {
-                        QuizRecord(rs.getString("player_name"), rs.getInt("streak"), rs.getString("achieved_at"))
-                    } else null
-                }
+    // 🏆 Global liderlik tablosu — artık SQLite'ta DEĞİL, Supabase'in ücretsiz
+    // Postgres'inde tutuluyor (REST API üzerinden). Render'ın free tier'ı kalıcı
+    // disk sunmadığı için SQLite'taki rekor her uyku/deploy sonrası sıfırlanıyordu
+    // — Supabase gerçekten kalıcı, ücretsiz bir dış servis.
+    private val supabaseUrl = System.getenv("SUPABASE_URL")?.trimEnd('/')
+    private val supabaseKey = System.getenv("SUPABASE_KEY")
+
+    private val httpClient = HttpClient(CIO) {
+        install(HttpTimeout) { requestTimeoutMillis = 15_000 }
+    }
+
+    suspend fun fetchTopQuizRecord(): QuizRecord? {
+        if (supabaseUrl == null || supabaseKey == null) {
+            println("⚠️ SUPABASE_URL / SUPABASE_KEY ayarlanmamış, liderlik tablosu devre dışı.")
+            return null
+        }
+        return try {
+            val response: HttpResponse = httpClient.get("$supabaseUrl/rest/v1/quiz_records") {
+                header("apikey", supabaseKey)
+                header("Authorization", "Bearer $supabaseKey")
+                parameter("select", "player_name,streak,achieved_at")
+                parameter("order", "streak.desc,achieved_at.asc")
+                parameter("limit", "1")
             }
+            val body = response.bodyAsText()
+            val rows = Json.parseToJsonElement(body).jsonArray
+            if (rows.isEmpty()) return null
+            val row = rows[0].jsonObject
+            QuizRecord(
+                playerName = row["player_name"]?.jsonPrimitive?.content ?: "Anonim",
+                streak = row["streak"]?.jsonPrimitive?.int ?: 0,
+                achievedAt = row["achieved_at"]?.jsonPrimitive?.content ?: ""
+            )
+        } catch (e: Exception) {
+            println("🔥 Supabase liderlik tablosu okuma hatası: ${e.message}")
+            null
         }
     }
 
-    // 🏆 Yeni bir seri gönderiliyor — sadece mevcut rekoru GERÇEKTEN geçiyorsa
-    // kaydediyoruz (aksi halde tabloyu boş yere şişirmeyelim).
-    fun submitQuizRecordIfBeatsCurrent(playerName: String, streak: Int): QuizRecord {
+    suspend fun submitQuizRecordIfBeatsCurrent(playerName: String, streak: Int): QuizRecord {
         val current = fetchTopQuizRecord()
+        if (supabaseUrl == null || supabaseKey == null) {
+            return current ?: QuizRecord(playerName, streak, "")
+        }
         if (current == null || streak > current.streak) {
             val safeName = playerName.trim().take(24).ifBlank { "Anonim" }
-            withConnection { conn ->
-                conn.prepareStatement("INSERT INTO quiz_records (player_name, streak, achieved_at) VALUES (?, ?, ?)").use { stmt ->
-                    stmt.setString(1, safeName)
-                    stmt.setInt(2, streak)
-                    stmt.setString(3, java.time.Instant.now().toString())
-                    stmt.executeUpdate()
+            try {
+                httpClient.post("$supabaseUrl/rest/v1/quiz_records") {
+                    header("apikey", supabaseKey)
+                    header("Authorization", "Bearer $supabaseKey")
+                    header("Content-Type", "application/json")
+                    setBody(Json.encodeToString(QuizRecordSubmission.serializer(), QuizRecordSubmission(safeName, streak)))
                 }
+            } catch (e: Exception) {
+                println("🔥 Supabase liderlik tablosu yazma hatası: ${e.message}")
             }
-            return QuizRecord(safeName, streak, java.time.Instant.now().toString())
+            return QuizRecord(safeName, streak, "")
         }
         return current
     }

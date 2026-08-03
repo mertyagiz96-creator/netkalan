@@ -621,6 +621,86 @@
 
         .sort-toggle-btn:hover { border-color: var(--accent-gold); color: var(--accent-gold); }
 
+        .duo-share-card {
+            max-width: 700px;
+            margin: 20px auto 12px auto;
+            padding: 24px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgb(var(--surface-strong-rgb)) 0%, rgba(var(--light-green-rgb),0.15) 100%);
+            border: 2px solid rgba(var(--accent-gold-rgb), 0.4);
+        }
+
+        .duo-share-header {
+            text-align: center;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent-gold);
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
+
+        .duo-share-columns {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .duo-share-side {
+            flex: 1;
+            text-align: center;
+            padding: 16px 10px;
+            border-radius: 12px;
+            background: rgba(var(--fg-rgb), 0.04);
+        }
+
+        .duo-share-side.winner-side { border: 2px solid var(--accent-gold); background: rgba(var(--accent-gold-rgb), 0.1); }
+
+        .duo-share-flag { font-size: 2.6rem; }
+        .duo-share-country { font-weight: 800; font-size: 1rem; margin-top: 4px; }
+        .duo-share-role { font-size: 0.7rem; color: rgba(var(--fg-rgb), 0.55); margin-bottom: 10px; }
+        .duo-share-net { font-size: 1.4rem; font-weight: 800; color: var(--light-green); }
+        .duo-share-net-label { font-size: 0.65rem; color: rgba(var(--fg-rgb), 0.5); margin-bottom: 2px; }
+        .duo-share-mini { font-size: 0.7rem; color: rgba(var(--fg-rgb), 0.6); margin-top: 8px; }
+
+        .duo-share-vs {
+            font-size: 1.3rem;
+            font-weight: 900;
+            color: var(--accent-gold);
+            flex-shrink: 0;
+            width: 40px;
+        }
+
+        .duo-share-footer {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 0.65rem;
+            color: rgba(var(--fg-rgb), 0.4);
+            letter-spacing: 1px;
+        }
+
+        .duo-download-btn {
+            display: block;
+            margin: 0 auto 20px auto;
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: 1px solid rgba(var(--accent-gold-rgb), 0.5);
+            background: transparent;
+            color: var(--accent-gold);
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .duo-download-btn:hover { background: rgba(var(--accent-gold-rgb), 0.1); }
+
+        @media (max-width: 650px) {
+            .duo-share-columns { flex-direction: column; }
+            .duo-share-vs { width: auto; padding: 4px 0; }
+        }
+
         .country-search-wrap {
             max-width: 420px;
             margin: 0 auto 20px auto;
@@ -856,6 +936,7 @@
             .net-remaining-pct { display: block; }
         }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 
@@ -895,7 +976,7 @@
         <div class="sort-toggle-row" style="position: relative; gap: 8px; flex-wrap: wrap;">
             <div class="settings-panel-wrap" id="filtersMenuWrap">
                 <button id="filtersMenuBtn" class="sort-toggle-btn" data-i18n="filtersBtn">🔧 Filtreler & Sıralama</button>
-                <div id="filtersMenuPanel" class="settings-panel" style="left: 50%; transform: translateX(-50%); min-width: 280px;">
+                <div id="filtersMenuPanel" class="settings-panel" style="left: 0; right: auto; min-width: 280px; max-width: 90vw;">
                     <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:1px; color:rgba(var(--fg-rgb),0.45); margin: 4px 0 6px 4px;" data-i18n="sortLabel">Sıralama (Net Kalan)</div>
                     <div id="sortToggleRowInPanel" style="display:flex; flex-direction:column; gap:4px; margin-bottom: 10px;">
                         <button class="household-btn active" data-dir="desc" data-i18n="sortDesc">🔽 Çoktan Aza</button>
@@ -917,7 +998,7 @@
 
             <div class="settings-panel-wrap" id="recommendMenuWrap">
                 <button id="recommendMenuBtn" class="sort-toggle-btn">🧭 Bana Ülke Öner</button>
-                <div id="recommendMenuPanel" class="settings-panel" style="left: 50%; transform: translateX(-50%); min-width: 260px;">
+                <div id="recommendMenuPanel" class="settings-panel" style="right: 0; left: auto; min-width: 260px; max-width: 90vw;">
                     <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:1px; color:rgba(var(--fg-rgb),0.45); margin: 4px 0 6px 4px;">Senin İçin En Önemlisi Ne?</div>
                     <button class="household-btn" data-priority="net" style="text-align:left;">💰 En Yüksek Net Kalan</button>
                     <button class="household-btn" data-priority="tax" style="text-align:left; margin-top:4px;">🧾 En Düşük Vergi</button>
@@ -1729,6 +1810,30 @@
         }
 
         return `
+            <div id="duoShareCard" class="duo-share-card">
+                <div class="duo-share-header">⚔️ NetKalan — Ülke Karşılaştırma</div>
+                <div class="duo-share-columns">
+                    <div class="duo-share-side ${winner === countryA ? 'winner-side' : ''}">
+                        <div class="duo-share-flag">${countryFlags[countryA.countryCode] || ''}</div>
+                        <div class="duo-share-country">${countryA.countryNameTr}</div>
+                        <div class="duo-share-role">${currentRole}</div>
+                        <div class="duo-share-net-label">Aylık Net Kalan</div>
+                        <div class="duo-share-net">${formatUsd(dA.remaining)}</div>
+                        <div class="duo-share-mini">Vergi: %${countryA.taxWedgePercent.toFixed(1)}</div>
+                    </div>
+                    <div class="duo-share-vs">VS</div>
+                    <div class="duo-share-side ${winner === countryB ? 'winner-side' : ''}">
+                        <div class="duo-share-flag">${countryFlags[countryB.countryCode] || ''}</div>
+                        <div class="duo-share-country">${countryB.countryNameTr}</div>
+                        <div class="duo-share-role">${currentRole}</div>
+                        <div class="duo-share-net-label">Aylık Net Kalan</div>
+                        <div class="duo-share-net">${formatUsd(dB.remaining)}</div>
+                        <div class="duo-share-mini">Vergi: %${countryB.taxWedgePercent.toFixed(1)}</div>
+                    </div>
+                </div>
+                <div class="duo-share-footer">netkalan.onrender.com</div>
+            </div>
+            <button id="downloadDuoCardBtn" class="duo-download-btn">📸 Kartı Paylaş</button>
             <div class="savings-panel" style="max-width: 900px; margin: 20px auto; font-size: 0.9rem;">
                 <b>🔍 Karşılaştırma Analizi — ${countryA.countryNameTr} vs ${countryB.countryNameTr}</b><br><br>
                 Aylık net kalan tutar açısından <b>${winner.countryNameTr}</b> önde — ${loser.countryNameTr}'e göre
@@ -1743,6 +1848,50 @@
                 <span class="savings-note">Bu metin yapay zeka tarafından değil, sabit kural şablonlarıyla otomatik üretilmiştir.</span>
             </div>
         `;
+    }
+
+    // 📸 FIFA kartı tarzı duo karşılaştırma kartını PNG olarak oluşturup NATIVE
+    // paylaşım ekranını açıyoruz (WhatsApp, Instagram, galeriye kaydet vb.) —
+    // ham "indirme" linki mobilde İndirilenler klasörüne atıyordu, galeriye değil.
+    // Web Share API desteklenmiyorsa (çoğunlukla masaüstü) indirmeye düşüyoruz.
+    function setupDuoCardDownload() {
+        const btn = document.getElementById('downloadDuoCardBtn');
+        if (!btn) return;
+        btn.addEventListener('click', async () => {
+            const card = document.getElementById('duoShareCard');
+            const originalText = btn.textContent;
+            btn.textContent = '⏳ Hazırlanıyor...';
+            try {
+                const canvas = await html2canvas(card, { backgroundColor: '#0f1f16', scale: 2 });
+                canvas.toBlob(async (blob) => {
+                    const file = new File([blob], 'netkalan-karsilastirma.png', { type: 'image/png' });
+
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        try {
+                            await navigator.share({
+                                files: [file],
+                                title: 'NetKalan Ülke Karşılaştırma',
+                                text: 'Ülke karşılaştırmamı gör: netkalan.onrender.com'
+                            });
+                            btn.textContent = originalText;
+                            return;
+                        } catch (shareErr) {
+                            // Kullanıcı paylaşımı iptal etti ya da hata oldu — indirmeye düşüyoruz.
+                        }
+                    }
+
+                    // Fallback: Web Share desteklenmiyorsa (çoğunlukla masaüstü) indir.
+                    const link = document.createElement('a');
+                    link.download = 'netkalan-karsilastirma.png';
+                    link.href = URL.createObjectURL(blob);
+                    link.click();
+                    btn.textContent = originalText;
+                }, 'image/png');
+            } catch (e) {
+                alert('Kart oluşturulamadı, tekrar dener misin?');
+                btn.textContent = originalText;
+            }
+        });
     }
 
     function buildLifeScoreHtml(d, c) {
@@ -2315,6 +2464,7 @@
             analysisDiv.id = 'compareAnalysisBox';
             analysisDiv.innerHTML = buildCompareAnalysisHtml(displayCountries[0], displayCountries[1]);
             list.parentElement.insertBefore(analysisDiv, list.nextSibling);
+            setupDuoCardDownload();
         }
     }
 
